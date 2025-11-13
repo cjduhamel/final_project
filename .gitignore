@@ -1,2 +1,15 @@
 /.env
 /data
+
+
+#tex files (include any files in build folders)
+build/
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.synctex.gz
+*.run.xml
+*.bcf

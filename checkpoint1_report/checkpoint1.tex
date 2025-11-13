@@ -1,0 +1,77 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+
+% use si uints packege soren was yappin about
+
+\usepackage[backend=biber, style=ieee]{biblatex}
+\addbibresource{../final.bib} % <-- your .bib file
+
+% I put together a bunch of packages that you'll need/want in 445.sty.  Feel
+% free to take a look!
+\usepackage{basic_482} % thank you Brian Jones for the template
+\setterm{Fall}
+\setclass{CSC 482}
+
+
+\usepackage{setspace}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{bm}
+\usepackage{subcaption}
+\captionsetup{font=small,labelfont=bf}
+
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning}
+\usetikzlibrary{mindmap, shadows}
+\tikzstyle{process} = [rectangle, minimum width=4cm, minimum height=1.2cm, text centered, draw=black, fill=blue!10]
+\tikzstyle{arrow} = [thick, -{Stealth}]
+
+\begin{document}
+
+\createtitle{Project 1 Milestone}{C.J. DuHamel and Arian Houshmand}
+
+\section{Project Description}
+Given a paper with no in-text citations and a bibliography, this project aims to identify the correct locations for the citations within the text. This will be accomplished by training a model to predict the most likely location fro each citation, starting with the most likely paragraph and hopefully narrowing the prediction down to the exact, most likely sentence.
+
+Our plan is to train a neural network model to calculate a probability score for each possible citation for each sentence of the paper. We will then take the maximum of the probability scores for each citation across all sentences to determine the most likely location for each citation. Since semantic similarity (which we can assume is identifiable via a neural network) does not consider direct references to other works, we will also attempt to implement a reference/rule based system to identify direct mentions of other works (e.g. "as shown in [1]", "according to Smith et al. (2020)", etc.) and use this to adjust the probability scores accordingly.
+
+\section{Data Description}
+\subsection{CiteWorth}
+CiteWorth \cite{CiteWorth} is a dataset of academic papers compiled by researches at the University of Copenhagen. The dataset contains 1.2 million cleaned sentences from academic papers, labeled with their 'cite-worthiness', or whether or not that sentence contains an in-text citation. The dataset is not only labeled with cite-worthiness, but also annotated heavily with details about the cited papers and various representations of the sentences themselves.
+
+Each entry in the dataset represents a paragraph from an academic paper, containing a variety of fields, including:
+\begin{itemize}
+    \item \textbf{paper\_id}: The unique identifier for the paper from which the paragraph was extracted.
+    \item \textbf{original\_text}: The actual text of the paragraph.
+    \item \textbf{section\_title}: The title of the section in which the paragraph appears.
+    \item \textbf{samples}: A list of sentences within the paragraph, each with its own set of annotations.
+    \begin{itemize}
+        \item \textbf{text}: The cleaned sentence text without the citations.
+        \item \textbf{label}: A binary label indicating whether the sentence contains a citation (1) or not (0).
+        \item \textbf{original\_text}: The original sentence text with citations included.
+        \item \textbf{ref\_ids}: A list of reference IDs corresponding to the citations present in the sentence. These are the 'Corpus Ids' used to uniquely identify cited papers in the Semantic Scholar Open Research Corpus (S2ORC) dataset.
+        \item \textbf{citation\_text}: List of citation strings as they appear in the original text.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Semantic Scholar Open Research Corpus}
+The Semantic Scholar Open Research Corpus (S2ORC) \cite{S2ORC} is a large dataset of academic papers (400+ GB) compiled by researchers at the Allen Institute for AI. The dataset contains over 81 million papers, including their full text and metadata for natural language processing tasks. Each paper in the dataset is assigned a unique 'Corpus Id', which is used to identify and reference papers within the dataset.
+
+The dataset is organized in JSONL format, with each line representing a single paper. Each paper entry contains various fields, including:
+\begin{itemize}
+    \item \textbf{paper\_id}: The unique identifier for the paper.
+    \item \textbf{metadata}: Metadata about the paper, including title, authors, abstract, and publication venue.
+    \item \textbf{body\_text}: The full text of the paper, divided into sections and paragraphs.
+    \item \textbf{references}: A list of references cited in the paper, each with its own set of metadata, including the 'Corpus Id'.
+\end{itemize}
+
+
+\section{References}
+\printbibliography
+
+
+
+
+\end{document}
