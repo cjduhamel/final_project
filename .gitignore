@@ -1,5 +1,7 @@
 /.env
-/data
+/data/
+
+id_to_shard.csv
 
 
 #tex files (include any files in build folders)
