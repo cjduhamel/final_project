@@ -1,0 +1,75 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+
+% use si uints packege soren was yappin about
+
+\usepackage[backend=biber, style=ieee]{biblatex}
+\addbibresource{../final.bib} % <-- your .bib file
+
+% I put together a bunch of packages that you'll need/want in 445.sty.  Feel
+% free to take a look!
+\usepackage{basic_482} % thank you Brian Jones for the template
+\setterm{Fall}
+\setclass{CSC 482}
+
+
+\usepackage{setspace}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{bm}
+\usepackage{subcaption}
+\captionsetup{font=small,labelfont=bf}
+
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning}
+\usetikzlibrary{mindmap, shadows}
+\tikzstyle{process} = [rectangle, minimum width=4cm, minimum height=1.2cm, text centered, draw=black, fill=blue!10]
+\tikzstyle{arrow} = [thick, -{Stealth}]
+
+\begin{document}
+
+\createtitle{Project Checkpoint 2}{C.J. DuHamel and Arian Houshmand}
+
+\section{Dataset Exploration and Retrieval}
+
+As stated in the previous checkpoint, our project will be using two datasets: CiteWorth \cite{CiteWorth} and the Semantic Scholar Open Research Corpus (S2ORC) \cite{S2ORC}.
+
+The CiteWorth dataset is relatively straightforward to access and use. It was retrieved and explored in the last checkpoint via direct download from Hugging Face. 
+
+
+\subsection{Data Retrieval}
+
+Previously, we had assumed that the S2ORC dataset could be accessed via simple API calls to retrieve individual papers using their 'Corpus Id's. However, upon further investigation, we discovered that this is not the case. The only database that is accessible via API calls is the S2AG (Semantic Scholar Academic Graph) database, which only contains metadata about the papers, but not the full text itself. Thus, we are required to download the full S2ORC dataset in bulk and extract the relevant papers using their 'Corpus Id's. This is significantly more complex than we had originally anticipated, and much time has been spent just designing the downloader. 
+
+The general algorithm we wrote for downloading the dataset is as follows:
+\begin{enumerate}
+    \item Call the Semantic Scholar (S2) API to retrieve the most recent release of the S2ORC dataset.
+    \item Call the S2 API again to retrieve the presigned download links for the dataset files.
+    \item Build a CSV by extracting the "shard\_id" for each download link and associating it with the corresponding presigned URL. Add additonal columns to the CSV to track download status and local file paths. This is to facilitate resuming downloads in case of interruptions.
+    \item Download the dataset files using the presigned links. For each link (i.e. row in the CSV), do the following:
+        \begin{enumerate}
+            \item Check the download status column in the CSV to see if the file has already been downloaded. If it has, skip to the next row.
+            \item If the file has not been downloaded, download it and save it to the specified local file path.
+            \item After a successful download, update the download status column in the CSV to indicate that the file has been downloaded.
+            \item The presigned URLs have a limited validity period, which is much less than the time required to download the whole dataset. If a link has expired, refresh the links by repeating step 2 and updating the CSV with the new links. Then, retry downloading the expired file.
+        \end{enumerate}
+\end{enumerate}
+
+\subsection{Building our Local Database}
+In order to train our model, each citation in the CiteWorth paper must be matched with the corresponding paper from the S2ORC dataset. This way, we can build training examples that consist of a paragraph from the CiteWorth dataset along with the full text of the cited paper(s) from the S2ORC dataset.
+
+Once we have downloaded the S2ORC dataset files, we need to extract the relevant papers using their 'Corpus Id's. 
+
+To facilitate this, we built a local database that maps 'Corpus Id's to the corresponding paper data, including which shard file the paper is located in. This allows us to quickly look up and retrieve papers as needed during our model training and evaluation. This way, for any training example from the CiteWorth dataset, we can easily find and load the full text of the cited papers from our local S2ORC database.
+
+\section{Pipeline Design}
+We have implemented the full pipeline structure for our project, which includes data loading, preprocessing, model training, and evaluation components. The pipeline is designed to be modular and flexible, allowing us to easily swap out different models and preprocessing techniques as needed.
+
+The pipeline includes modules for logging and model tracking, allowing for the logging of training and evaluation metrics, along with relevant hyperparameters. This will be essential to monitoring the effectiveness of different models and configurations while ensuring reproducibility of results.
+
+
+\printbibliography
+
+\end{document}

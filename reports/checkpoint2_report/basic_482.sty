@@ -1,0 +1,60 @@
+\ProvidesPackage{basic_482}
+
+% Various packages for formatting
+\RequirePackage{lmodern}
+\RequirePackage{parskip}
+\RequirePackage{fancyhdr}
+\RequirePackage{lastpage}
+\RequirePackage{geometry}
+\RequirePackage{microtype}
+\RequirePackage{enumitem}
+\RequirePackage{booktabs}
+\RequirePackage{array}
+\RequirePackage{multicol}
+
+% Packages for doing math
+\RequirePackage{mathtools}
+\RequirePackage{amsthm}
+\RequirePackage{amssymb}
+
+% Package for inserting images
+\RequirePackage{graphicx}
+
+% Use the geometry package to set the margins.
+\geometry{
+  letterpaper,margin=1in,bottom=0.7in,headsep=15pt
+}
+
+\pagestyle{fancy}
+\fancypagestyle{plain}{}
+
+\newcommand*{\setterm}[1]{\def\theterm{#1}}
+\newcommand*{\setclass}[1]{\def\theclass{#1}}
+
+% Format the header to include the course (on left) and page number (on right)
+\fancyfoot{}\fancyhead{}
+\fancyhead[L]{\small \theclass\ \theterm\ \the\year}
+\fancyhead[R]{\small Page \thepage\ of~\pageref{LastPage}}
+
+% Create a title.
+\newcommand*{\createtitle}[2]{%
+  \begin{center}
+    {\LARGE #1}\par
+    {\large Author: #2}
+  \end{center}
+}
+
+% Define some theorem-style environments.
+\theoremstyle{plain}
+\newtheorem*{theorem*}{Theorem}
+\newtheorem*{corollary*}{Corollary}
+\newtheorem*{lemma*}{Lemma}
+
+% Define some definition-style environments.
+\theoremstyle{definition}
+\newtheorem*{example*}{Example}
+\newtheorem*{definition*}{Definition}
+
+% Define a note environment.
+\theoremstyle{remark}
+\newtheorem*{note*}{Note}
