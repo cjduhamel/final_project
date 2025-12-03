@@ -160,6 +160,7 @@ if __name__ == "__main__":
                     #keep only what was previously in pending_rows
                     url_df = url_df[url_df["shard_id"].isin([r["shard_id"] for r in pending_rows])]
                     pending_rows = url_df.to_dict(orient="records")
+                    
                     retry_count += 1
                     if retry_count >= max_retries:
                         print("Max retries reached, skipping this shard.")

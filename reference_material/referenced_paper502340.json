@@ -1,0 +1,49 @@
+{
+    "corpusid": 502340,
+    "externalids": {
+        "arxiv": null,
+        "mag": "2510572197",
+        "acl": null,
+        "pubmed": "27566250",
+        "pubmedcentral": "5002190",
+        "dblp": null,
+        "doi": "10.1186/s12885-016-2732-0"
+    },
+    "content": {
+        "source": {
+            "pdfurls": null,
+            "pdfsha": "af45f0d5a7b287b776d7c84101ee532f779a4510",
+            "oainfo": {
+                "license": "CCBY",
+                "openaccessurl": "https://bmccancer.biomedcentral.com/track/pdf/10.1186/s12885-016-2732-0",
+                "status": "GOLD"
+            }
+        },
+        "text": "\n\n\n0.96\n\n\nFigure S1 :Figure S2 :\nS1S2Sensitivity analysis of OS(A) and RFS(B). Sensitivity analysis of ER status(A) , PR status(B), c-erB-2 status(C), T category(D) and N category(E).\n",
+        "annotations": {
+            "abstract": null,
+            "author": null,
+            "authoraffiliation": null,
+            "authorfirstname": null,
+            "authorlastname": null,
+            "bibauthor": null,
+            "bibauthorfirstname": null,
+            "bibauthorlastname": null,
+            "bibentry": null,
+            "bibref": null,
+            "bibtitle": null,
+            "bibvenue": null,
+            "figure": "[{\"attributes\":{\"id\":\"fig_0\"},\"end\":183,\"start\":9}]",
+            "figurecaption": "[{\"end\":183,\"start\":37}]",
+            "figureref": null,
+            "formula": null,
+            "paragraph": null,
+            "publisher": null,
+            "sectionheader": "[{\"end\":32,\"start\":10}]",
+            "table": null,
+            "tableref": null,
+            "title": null,
+            "venue": null
+        }
+    }
+}
