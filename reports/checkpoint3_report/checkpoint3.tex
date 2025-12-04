@@ -102,13 +102,6 @@ Here are some example entries from the structured dataset:
 \section{Initial Neural Network Model}
 
 \subsection{Model Overview}
-With the structured dataset created, we have begun work on an initial neural network model for the auto citation task. The model is a binary classification model that takes as input the sentence - reference pair and outputs a prediction of whether the reference should be cited in the sentence (1 for cite, 0 for no cite).
-
-Upon inference (given a reference, find the best sentence to cite it in), the model will run on all sentences in the paper and output a probability for each sentence. The sentences will then be ranked and a top N sentences can be selected for citation, with N varying based on user preference.
-
-
-
-\subsection{Model Overview}
 With the structured dataset created, we have begun work on an initial neural network model for the auto citation task. Each data point in our dataset is a \emph{sentence--reference} pair:
 \begin{itemize}
     \item a sentence $s$ from an original paper, and
@@ -127,7 +120,7 @@ We cast this as a binary classification problem: given $(s, r)$, the model predi
 We use a SciBERT-based cross-encoder as our core model.
 
 \paragraph{Base model.}
-We start with a BERT-style transformer pretrained on a large corpus of scientific articles. SciBERT is well-suited to our setting because both the sentences and the reference texts come from scientific papers.
+We start with a BERT-style transformer pretrained on a large corpus of scientific articles. SciBERT \cite{sciBERT} is well-suited to our setting because both the sentences and the reference texts come from scientific papers.
 
 \paragraph{Input representation.}
 Each raw example includes:
@@ -196,6 +189,9 @@ This shows that the model correctly identifies most non-citation pairs while als
 \end{quote}
 
 When paired with a reference about \emph{``Anti-interleukin-5 therapy in severe asthma''}, the model assigns a high probability to the \texttt{CITED} class. In contrast, when paired with an unrelated reference about \emph{``Smoking cessation and weight gain''}, the model assigns a high probability to \texttt{NOT\_CITED}. This behavior matches our intuition that the model is learning to detect whether the content of the sentence aligns with the content of the proposed reference.
+
+\subsection{Anticipated Usage}
+When we want to use the model (given a reference, find the best sentence to cite it in), the model will run on all sentences in the paper and output a probability for each sentence. The sentences will then be ranked and a top N sentences can be selected for citation, with N varying based on user preference.
 
 
 
