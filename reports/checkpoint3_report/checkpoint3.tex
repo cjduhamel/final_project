@@ -106,9 +106,99 @@ With the structured dataset created, we have begun work on an initial neural net
 
 Upon inference (given a reference, find the best sentence to cite it in), the model will run on all sentences in the paper and output a probability for each sentence. The sentences will then be ranked and a top N sentences can be selected for citation, with N varying based on user preference.
 
+
+
+\subsection{Model Overview}
+With the structured dataset created, we have begun work on an initial neural network model for the auto citation task. Each data point in our dataset is a \emph{sentence--reference} pair:
+\begin{itemize}
+    \item a sentence $s$ from an original paper, and
+    \item a candidate reference $r$ (another paper),
+\end{itemize}
+together with a binary label $y \in \{0,1\}$ indicating whether $r$ should be cited in $s$ ($y=1$ for \texttt{cite}, $y=0$ for \texttt{no\_cite}).
+
+We cast this as a binary classification problem: given $(s, r)$, the model predicts the probability that the reference is actually being cited in that sentence. At inference time (e.g., given a reference and all sentences in a paper), we can:
+\begin{enumerate}
+    \item score each sentence--reference pair with the model,
+    \item interpret the output as $P(\text{cite} \mid s, r)$, and
+    \item rank sentences by this probability to select the top $N$ sentences as suggested citation locations.
+\end{enumerate}
+
 \subsection{Model Architecture}
+We use a SciBERT-based cross-encoder as our core model.
+
+\paragraph{Base model.}
+We start with a BERT-style transformer pretrained on a large corpus of scientific articles. SciBERT is well-suited to our setting because both the sentences and the reference texts come from scientific papers.
+
+\paragraph{Input representation.}
+Each raw example includes:
+\begin{itemize}
+    \item \texttt{sentence}: the sentence from the original paper,
+    \item \texttt{ref\_paper\_text}: main text for the reference (e.g., abstract or introduction snippet),
+    \item optionally (if availble) \texttt{ref\_paper\_title} and \texttt{ref\_paper\_authors},
+    \item \texttt{label} $\in \{0,1\}$.
+\end{itemize}
+
+From these fields we construct a single reference string:
+\[
+r_{\text{block}} = \texttt{ref\_paper\_text}
+\;+\; \text{optional ``Title: title''}
+\;+\; \text{optional ``Authors: authors''},
+\]
+always placing \texttt{ref\_paper\_text} first since it is the most informative and consistently present field.
+
+
+
+\paragraph{Classification head and objective.}
+On top of the final hidden state corresponding to the \texttt{[CLS]} token, we add a linear classification head that outputs two logits corresponding to the classes \texttt{NOT\_CITED} and \texttt{CITED}. We apply a softmax to obtain class probabilities and train the entire model end-to-end using a standard cross-entropy loss:
+\[
+\mathcal{L} = - \big( y \log p_1 + (1-y)\log p_0 \big),
+\]
+where $p_1$ is the predicted probability of \texttt{CITED} and $p_0$ is the probability of \texttt{NOT\_CITED}.
+
+\paragraph{Handling class imbalance.}
+The raw dataset is imbalanced, with many more \texttt{NOT\_CITED} examples than \texttt{CITED} ones. To mitigate this, we perform oversampling of the positive class ($y=1$) in the \emph{training} set only, duplicating positive examples until the counts of positives and negatives are roughly equal. The validation set is left unchanged to reflect the true distribution of labels.
+
+\paragraph{Training configuration.}
+We fine-tune SciBERT using the HuggingFace \texttt{Trainer} with the following hyperparameters:
+\begin{itemize}
+    \item learning rate $2 \times 10^{-5}$,
+    \item batch size 8,
+    \item 4 training epochs,
+    \item weight decay 0.01.
+\end{itemize}
+
 
 \subsection{Model Results}
+We evaluate the model on a held-out validation set consisting of sentence--reference pairs that were not used for training. The main metrics are:
+
+\begin{itemize}
+    \item overall accuracy $\approx 0.74$,
+    \item F1 score for the \texttt{CITED} class $\approx 0.52$.
+\end{itemize}
+
+The confusion matrix on the validation set 
+
+\begin{center}
+\begin{tabular}{c|cc}
+    & \textbf{Pred 0 (NOT\_CITED)} & \textbf{Pred 1 (CITED)} \\
+    \hline
+    \textbf{True 0 (NOT\_CITED)} & 72 & 15 \\
+    \textbf{True 1 (CITED)}      & 17 & 17 \\
+\end{tabular}
+\end{center}
+
+This shows that the model correctly identifies most non-citation pairs while also recovering a substantial fraction of true citation pairs, despite the relatively small dataset size and inherent difficulty of the task.
+
+\paragraph{Example inference.}
+
+\begin{quote}
+\emph{``Specifically, IL-5 is the most important mediator that regulates eosinophilic inflammation through its effects on the proliferation, differentiation, and activation of eosinophils.''}
+\end{quote}
+
+When paired with a reference about \emph{``Anti-interleukin-5 therapy in severe asthma''}, the model assigns a high probability to the \texttt{CITED} class. In contrast, when paired with an unrelated reference about \emph{``Smoking cessation and weight gain''}, the model assigns a high probability to \texttt{NOT\_CITED}. This behavior matches our intuition that the model is learning to detect whether the content of the sentence aligns with the content of the proposed reference.
+
+
+
 
 
 \printbibliography
