@@ -18,7 +18,8 @@ logger = logging.getLogger(__name__)
 
 DATA_DIR = "data/s2orc/"
 OUT_FILE = "id_to_shard.csv"
-MAX_PAPERS = 200
+MAX_PAPERS = 10000 
+MAX_TEXT = 2000
 
 shard_paths = [os.path.join(DATA_DIR, f) for f in os.listdir(DATA_DIR) if f.endswith('.gz')]
 
@@ -161,6 +162,9 @@ def get_referenced_id(paper, ref_ids):
     ref_id_map = {}
     raw_refs = paper.get('body', {}).get('annotations', {}).get('bib_ref', [])
     paper_refs = json.loads(raw_refs) if isinstance(raw_refs, str) else raw_refs
+    if not paper_refs:
+        logging.debug("No paper references found.")
+        return ref_id_map
 
     logging.debug("Paper references found:", paper_refs)
     logging.debug("Paper references type:", type(paper_refs))
@@ -319,7 +323,7 @@ def build_complete_dataset():
                     if not text:
                         text = ref_paper.get('content', {}).get('text', "")
 
-                    item['ref_paper_text'] = text[:500] if text else ""
+                    item['ref_paper_text'] = text[:MAX_TEXT] if text else ""
                     item['label'] = label
                     dataset_chunk.append(item)
 
