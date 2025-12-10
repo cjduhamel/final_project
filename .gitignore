@@ -15,3 +15,6 @@ build/
 *.synctex.gz
 *.run.xml
 *.bcf
+.DS_Store
+saved_model
+saved_model.zip
