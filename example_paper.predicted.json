@@ -27,19 +27,11 @@
       ],
       "predicted_citations": {
         "agg_method": "mean",
-        "top_k": 3,
+        "top_k": 1,
         "paragraphs": [
           {
             "paragraph_idx": 2,
             "score": 0.7634459733963013
-          },
-          {
-            "paragraph_idx": 1,
-            "score": 0.65743038803339
-          },
-          {
-            "paragraph_idx": 12,
-            "score": 0.5468375235795975
           }
         ]
       }
@@ -53,19 +45,11 @@
       ],
       "predicted_citations": {
         "agg_method": "mean",
-        "top_k": 3,
+        "top_k": 1,
         "paragraphs": [
           {
             "paragraph_idx": 1,
             "score": 0.7678778320550919
-          },
-          {
-            "paragraph_idx": 2,
-            "score": 0.6876479585965475
-          },
-          {
-            "paragraph_idx": 12,
-            "score": 0.5563258230686188
           }
         ]
       }
@@ -79,19 +63,11 @@
       ],
       "predicted_citations": {
         "agg_method": "mean",
-        "top_k": 3,
+        "top_k": 1,
         "paragraphs": [
           {
             "paragraph_idx": 2,
             "score": 0.7566646387179693
-          },
-          {
-            "paragraph_idx": 12,
-            "score": 0.7497861087322235
-          },
-          {
-            "paragraph_idx": 0,
-            "score": 0.5334601104259491
           }
         ]
       }
@@ -106,19 +82,11 @@
       ],
       "predicted_citations": {
         "agg_method": "mean",
-        "top_k": 3,
+        "top_k": 1,
         "paragraphs": [
           {
             "paragraph_idx": 2,
             "score": 0.7479508618513743
-          },
-          {
-            "paragraph_idx": 12,
-            "score": 0.591051958501339
-          },
-          {
-            "paragraph_idx": 1,
-            "score": 0.5786487907171249
           }
         ]
       }
@@ -132,19 +100,11 @@
       ],
       "predicted_citations": {
         "agg_method": "mean",
-        "top_k": 3,
+        "top_k": 1,
         "paragraphs": [
           {
             "paragraph_idx": 2,
             "score": 0.7773482203483582
-          },
-          {
-            "paragraph_idx": 12,
-            "score": 0.7270135879516602
-          },
-          {
-            "paragraph_idx": 1,
-            "score": 0.6221610829234123
           }
         ]
       }
@@ -158,19 +118,11 @@
       ],
       "predicted_citations": {
         "agg_method": "mean",
-        "top_k": 3,
+        "top_k": 1,
         "paragraphs": [
           {
             "paragraph_idx": 2,
             "score": 0.6803984642028809
-          },
-          {
-            "paragraph_idx": 12,
-            "score": 0.6280410885810852
-          },
-          {
-            "paragraph_idx": 1,
-            "score": 0.5647129416465759
           }
         ]
       }
@@ -185,19 +137,11 @@
       ],
       "predicted_citations": {
         "agg_method": "mean",
-        "top_k": 3,
+        "top_k": 1,
         "paragraphs": [
           {
             "paragraph_idx": 2,
             "score": 0.7515347898006439
-          },
-          {
-            "paragraph_idx": 1,
-            "score": 0.5824296399950981
-          },
-          {
-            "paragraph_idx": 12,
-            "score": 0.5696680322289467
           }
         ]
       }
@@ -212,19 +156,11 @@
       ],
       "predicted_citations": {
         "agg_method": "mean",
-        "top_k": 3,
+        "top_k": 1,
         "paragraphs": [
           {
             "paragraph_idx": 12,
             "score": 0.615264005959034
-          },
-          {
-            "paragraph_idx": 11,
-            "score": 0.49559955298900604
-          },
-          {
-            "paragraph_idx": 2,
-            "score": 0.48100658257802326
           }
         ]
       }
@@ -241,19 +177,11 @@
       ],
       "predicted_citations": {
         "agg_method": "mean",
-        "top_k": 3,
+        "top_k": 1,
         "paragraphs": [
           {
             "paragraph_idx": 11,
             "score": 0.7647125571966171
-          },
-          {
-            "paragraph_idx": 12,
-            "score": 0.7604914158582687
-          },
-          {
-            "paragraph_idx": 2,
-            "score": 0.7066998183727264
           }
         ]
       }
@@ -268,19 +196,11 @@
       ],
       "predicted_citations": {
         "agg_method": "mean",
-        "top_k": 3,
+        "top_k": 1,
         "paragraphs": [
           {
             "paragraph_idx": 2,
             "score": 0.7803573310375214
-          },
-          {
-            "paragraph_idx": 12,
-            "score": 0.6228605806827545
-          },
-          {
-            "paragraph_idx": 0,
-            "score": 0.5824322054783503
           }
         ]
       }
@@ -294,19 +214,11 @@
       ],
       "predicted_citations": {
         "agg_method": "mean",
-        "top_k": 3,
+        "top_k": 1,
         "paragraphs": [
           {
             "paragraph_idx": 8,
             "score": 0.44341152906417847
-          },
-          {
-            "paragraph_idx": 11,
-            "score": 0.40413668006658554
-          },
-          {
-            "paragraph_idx": 6,
-            "score": 0.398247371117274
           }
         ]
       }
@@ -320,19 +232,11 @@
       ],
       "predicted_citations": {
         "agg_method": "mean",
-        "top_k": 3,
+        "top_k": 1,
         "paragraphs": [
           {
             "paragraph_idx": 9,
             "score": 0.37354586521784466
-          },
-          {
-            "paragraph_idx": 10,
-            "score": 0.34289699296156567
-          },
-          {
-            "paragraph_idx": 12,
-            "score": 0.3200254812836647
           }
         ]
       }
@@ -346,19 +250,11 @@
       ],
       "predicted_citations": {
         "agg_method": "mean",
-        "top_k": 3,
+        "top_k": 1,
         "paragraphs": [
           {
             "paragraph_idx": 3,
             "score": 0.34670669337113696
-          },
-          {
-            "paragraph_idx": 9,
-            "score": 0.34069395065307617
-          },
-          {
-            "paragraph_idx": 10,
-            "score": 0.3388376633326213
           }
         ]
       }

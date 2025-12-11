@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Paragraph-level citation inference tool.
+Inference tool
 
 Usage:
     python cite.py example_paper.json \
@@ -22,34 +22,25 @@ import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 
-# -----------------------------
 # Sentence splitting
-# -----------------------------
 
 _SENT_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
-
-
 def split_into_sentences(text: str) -> List[str]:
     """
     Very simple sentence splitter.
-    You can replace this with a better one if needed.
+    
     """
     text = text.strip()
     if not text:
-        return []
-    # naive split on punctuation+space
+        return []   
     parts = _SENT_SPLIT_RE.split(text)
-    # strip and drop empty pieces
     return [p.strip() for p in parts if p.strip()]
 
 
-# -----------------------------
 # Model loading
-# -----------------------------
-
 def load_model_and_tokenizer(model_dir: str, device: torch.device):
     """
-    Load fine-tuned SciBERT classifier and its tokenizer,
+    Load the trained model (in our case fine-tuned SciBERT classifier) and its tokenizer,
     plus inference config (threshold, max_length, label mapping).
     """
     print(f"Loading model from {model_dir} ...")
@@ -67,7 +58,7 @@ def load_model_and_tokenizer(model_dir: str, device: torch.device):
     id2label = {int(k): v for k, v in infer_cfg["id2label"].items()}
     label2id = infer_cfg["label2id"]
 
-    # You’re overriding the tuned threshold anyway, but we keep it for completeness
+    # We dont actually use the threshold for paragraphs anyways
     threshold = float(infer_cfg.get("threshold", 0.5))
 
     print("Loaded inference config:")
@@ -78,14 +69,11 @@ def load_model_and_tokenizer(model_dir: str, device: torch.device):
     return model, tokenizer, max_length, id2label, label2id, threshold
 
 
-# -----------------------------
 # Text helpers
-# -----------------------------
 
 def build_ref_block(ref: Dict[str, Any]) -> str:
     """
     Build ref_block from a reference dict.
-    Tries keys: title / authors / text / ref_paper_title / ref_paper_authors / ref_paper_text.
     """
     pieces = []
 
@@ -107,9 +95,8 @@ def build_ref_block(ref: Dict[str, Any]) -> str:
     return " ".join(pieces).strip()
 
 
-# -----------------------------
+
 # Inference helpers
-# -----------------------------
 
 def predict_probs_for_sentences(
     sentences: List[str],
@@ -156,7 +143,7 @@ def predict_probs_for_sentences(
 def aggregate_probs(probs: List[float], method: str = "mean") -> float:
     """
     Aggregate sentence-level probabilities into a paragraph score.
-    Supported methods: mean, max, noisy_or.
+    we supposed the following 3 methods: mean (sentences in para added), max(highest sentence score), noisy_or.
     """
     if not probs:
         return 0.0
@@ -186,17 +173,7 @@ def run_paragraph_scoring_for_ref(
     agg_method: str,
     top_k: int,
 ):
-    """
-    Compute paragraph scores for a single reference.
 
-    Returns dict with:
-      - ref_idx
-      - scores (np.array of shape [num_paragraphs])
-      - best_idx (int)
-      - top_indices (List[int] of length top_k)
-      - sentence_probs_by_paragraph: List[List[float]]
-      - gold_pars: List[int] (may be empty)
-    """
     ref_block = build_ref_block(ref)
     gold_pars = ref.get("referenced_in_paragraphs", []) or []
     num_pars = len(paragraphs)
@@ -214,7 +191,7 @@ def run_paragraph_scoring_for_ref(
         scores.append(score)
 
     scores_arr = np.array(scores, dtype=float)
-    # top-k paragraph indices (sorted by score desc)
+    # top-k paragraph indices sorted by score descin
     k = min(top_k, num_pars)
     ordering = np.argsort(-scores_arr)
     top_indices = ordering[:k].tolist()
@@ -231,9 +208,8 @@ def run_paragraph_scoring_for_ref(
     }
 
 
-# -----------------------------
+
 # Reporting (per-reference .txt)
-# -----------------------------
 
 def build_text_report_for_reference(
     ref_idx: int,
@@ -243,9 +219,7 @@ def build_text_report_for_reference(
     scoring_result: Dict[str, Any],
     agg_method: str,
 ) -> str:
-    """
-    Build a plain-text report for one reference, similar to your analyze_reference() prints.
-    """
+   
     lines: List[str] = []
 
     gold_pars = scoring_result["gold_pars"]
@@ -294,7 +268,7 @@ def build_text_report_for_reference(
         )
     lines.append("")
 
-    # Sentence-level details for predicted paragraph
+
     lines.append("-" * 80)
     lines.append("Sentence-level probabilities for the PREDICTED paragraph")
     lines.append("")
@@ -308,7 +282,7 @@ def build_text_report_for_reference(
         lines.append("")
     lines.append("")
 
-    # Sentence-level details for ALL gold paragraphs
+
     if gold_pars:
         lines.append("-" * 80)
         lines.append("Sentence-level probabilities for GOLD paragraphs")
@@ -335,9 +309,9 @@ def build_text_report_for_reference(
     return "\n".join(lines)
 
 
-# -----------------------------
-# JSON augmentation
-# -----------------------------
+
+# JSON output
+
 
 def attach_predictions_to_json(
     paper: Dict[str, Any],
@@ -345,10 +319,7 @@ def attach_predictions_to_json(
     agg_method: str,
     top_k: int,
 ):
-    """
-    Modify the paper dict in-place to add 'predicted_citations' field
-    to each reference with indices and scores.
-    """
+   
     references = paper.get("references", [])
     for ref_idx, ref in enumerate(references):
         result = all_scoring_results.get(ref_idx)
@@ -374,9 +345,9 @@ def attach_predictions_to_json(
         }
 
 
-# -----------------------------
+
 # Main
-# -----------------------------
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -385,7 +356,7 @@ def main():
     parser.add_argument("input_json", help="Path to input paper JSON")
     parser.add_argument(
         "--model-dir",
-        default="saved_model",
+        default="saved_model_t_0_45",
         help="Directory with fine-tuned SciBERT model and inference_config.json",
     )
     parser.add_argument(
@@ -414,7 +385,6 @@ def main():
 
     args = parser.parse_args()
 
-    # Device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Using device:", device)
 
@@ -481,16 +451,15 @@ def main():
 
         print(f"  -> wrote report to {report_path}")
 
-        # -----------------------------------------
+      
     # Compute top-k paragraph accuracy
-    # -----------------------------------------
+
     correct = 0
     total = 0
 
     for ref_idx, result in all_scoring_results.items():
         gold_pars = result.get("gold_pars") or []
         if not gold_pars:
-            # skip references without gold annotations
             continue
 
         top_indices = result.get("top_indices", [])
@@ -511,7 +480,7 @@ def main():
 
 
 
-    # Attach predictions to JSON and save
+
     attach_predictions_to_json(
         paper=paper,
         all_scoring_results=all_scoring_results,
