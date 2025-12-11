@@ -1,0 +1,47 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+
+% use si uints packege soren was yappin about
+
+\usepackage[backend=biber, style=ieee]{biblatex}
+\addbibresource{../final.bib} % <-- your .bib file
+
+% I put together a bunch of packages that you'll need/want in 445.sty.  Feel
+% free to take a look!
+\usepackage{basic_482} % thank you Brian Jones for the template
+\setterm{Fall}
+\setclass{CSC 482}
+
+
+\usepackage{setspace}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{bm}
+\usepackage{subcaption}
+\captionsetup{font=small,labelfont=bf}
+
+\usepackage{minted}
+
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning}
+\usetikzlibrary{mindmap, shadows}
+\tikzstyle{process} = [rectangle, minimum width=4cm, minimum height=1.2cm, text centered, draw=black, fill=blue!10]
+\tikzstyle{arrow} = [thick, -{Stealth}]
+
+\begin{document}
+
+\createtitle{Project Report - Auto Citations}{C.J. DuHamel and Arian Houshmand}
+
+\section{Introduction}
+Citations are essential to academia, facilitating collaboration, aknowledging prior work, and providing a basis for further research. However, managing citations can be very time-consuming, requiring the writer to manually format, organize, and place citations within their work, taking aluable time away from the actual writing and research that goes into the paper. To address this challenge, we created an Auto Citation tool that automates the placing of in-text citations given a list of referenced works. We aim to streamline the citation process, reducing workload on researchers and reducing the spread of plaigerism by ensuring proper attribution.
+
+\subsection{Problem Details}
+The goal of this project is to develop a tool that automatically inserts in-text citations into a document based on a provided bibliography/collection of referenced works. Ideally, the tool should be able to analyze the un-cited document and identify the optimal placements for in-text citations, ensuring that they are contextually relevant to the content being discussed.
+
+We will focus on a subset of the full functionality that would be desired for a complete tool. Specifically, we will target paragraph level citation placement, identifying for each reference the most relevant paragraph in the document to place the citation.
+
+\printbibliography
+
+\end{document}
