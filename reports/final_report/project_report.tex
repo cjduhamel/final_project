@@ -35,20 +35,56 @@
 \createtitle{Project Report - Auto Citations}{C.J. DuHamel and Arian Houshmand}
 
 \section{Introduction}
-Citations are essential to academia, facilitating collaboration, aknowledging prior work, and providing a basis for further research. However, managing citations can be very time-consuming, requiring the writer to manually format, organize, and place citations within their work, taking aluable time away from the actual writing and research that goes into the paper. To address this challenge, we created an Auto Citation tool that automates the placing of in-text citations given a list of referenced works. We aim to streamline the citation process, reducing workload on researchers and reducing the spread of plaigerism by ensuring proper attribution.
+Citations are essential to academia, facilitating collaboration, aknowledging prior work, and providing a basis for further research. However, managing citations can be very time-consuming, requiring the writer to manually format, organize, and place citations within their work, taking aluable time away from the actual writing and research that goes into the paper. To address this challenge, we created an Auto Citation tool that automates the placing of in-text citations given a list of referenced works. We aim to streamline the citation process, reducing workload on researchers and reducing the spread of plaigerism by ensuring proper attribution. 
+
+
 
 \subsection{Problem Details}
 The goal of this project is to develop a tool that automatically inserts in-text citations into a document based on a provided bibliography/collection of referenced works. Ideally, the tool should be able to analyze the un-cited document and identify the optimal placements for in-text citations, ensuring that they are contextually relevant to the content being discussed.
 
-We will focus on a subset of the full functionality that would be desired for a complete tool. Specifically, we will target paragraph level citation placement, identifying for each reference the most relevant paragraph in the document to place the citation.
+We will focus on a subset of the full functionality that would be desired for a complete tool. Specifically, we will target paragraph level citation placement, identifying for each reference the most relevant paragraph in the document to place the citation. To do this, we will use various natural language processing (NLP) techniques, specifically leveraging transformer-based models to utilize modern methods of semantic understanding of text.
 
 \section{Data Sources}
+\subsection{CiteWorth}
+CiteWorth \cite{CiteWorth} is a dataset of academic papers compiled by researches at the University of Copenhagen. The dataset contains 1.2 million cleaned sentences from academic papers, labeled with their 'cite-worthiness', or whether or not that sentence contains an in-text citation. The dataset is not only labeled with cite-worthiness, but also annotated heavily with details about the cited papers and various representations of the sentences themselves.
+
+Each entry in the dataset represents a paragraph from an academic paper, containing a variety of fields, including:
+\begin{itemize}
+    \item \textbf{paper\_id}: The unique identifier for the paper from which the paragraph was extracted.
+    \item \textbf{original\_text}: The actual text of the paragraph.
+    \item \textbf{section\_title}: The title of the section in which the paragraph appears.
+    \item \textbf{samples}: A list of sentences within the paragraph, each with its own set of annotations.
+    \begin{itemize}
+        \item \textbf{text}: The cleaned sentence text without the citations.
+        \item \textbf{label}: A binary label indicating whether the sentence contains a citation (1) or not (0).
+        \item \textbf{original\_text}: The original sentence text with citations included.
+        \item \textbf{ref\_ids}: A list of reference IDs corresponding to the citations present in the sentence. These are the 'Corpus Ids' used to uniquely identify cited papers in the Semantic Scholar Open Research Corpus (S2ORC) dataset.
+        \item \textbf{citation\_text}: List of citation strings as they appear in the original text.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Semantic Scholar Open Research Corpus}
+The Semantic Scholar Open Research Corpus (S2ORC) \cite{S2ORC} is a large dataset of academic papers (400+ GB) compiled by researchers at the Allen Institute for AI. The dataset contains over 81 million papers, including their full text and metadata for natural language processing tasks. Each paper in the dataset is assigned a unique 'Corpus Id', which is used to identify and reference papers within the dataset.
+
+The dataset is organized in JSONL format, with each line representing a single paper. Each paper entry contains various fields, including:
+\begin{itemize}
+    \item \textbf{paper\_id}: The unique identifier for the paper.
+    \item \textbf{metadata}: Metadata about the paper, including title, authors, abstract, and publication venue.
+    \item \textbf{body (or content)}: All relevant information from the paper, including the full text, figure and table info/captions, and any included annotations (byte offsets, in-text citation locations, etc.). This section contains a lot of information and is losely structured. It soemtimes contains nested fields, other times the fields are called different names, and sometimes the information is missing altogether. However, the full text of the paper is ussually in a consistent format.
+    \item \textbf{bibliography}: A list of references cited in the paper, each with its own set of metadata, including the 'matched\_paper\_id', which is the id for the referenced paper in the Semantic Scholar Academic Graph (S2AG), a superset of the S2ORC that contains significantly more papers, but not all of them contain text. This also contains a section called 'annotations', which contains the matched paper ids and byte offsets for bibliography entries.
+    
+\end{itemize}
+
+\section{System Design Overview}
+Our system is comprised of several key components that make up the pipeline for auto placing in text citations. We begin with the data sources mentioned above, which will be the basis for our project. The dataset retrieval is a major step in the process. Once the data is retrieved, we create our own local database to facilitate faster lookups during dataset building. Next, we build our training dataset from the combined CiteWorth and S2ORC datasets. This dataset will then be used to train and evaluate our model. Finally, we will utilize the model for inference on new complete documents to place citations automatically.
 
 \section{Dataset Creation and Design}
 
 \section{The Model}
 
 \section{Results and Evaluation}
+
+\subsection{Evaluation Metrics}
 
 \section{Limitations and Problems}
 

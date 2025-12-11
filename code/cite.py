@@ -356,7 +356,7 @@ def main():
     parser.add_argument("input_json", help="Path to input paper JSON")
     parser.add_argument(
         "--model-dir",
-        default="saved_model_t_0_45",
+        default="saved_model",
         help="Directory with fine-tuned SciBERT model and inference_config.json",
     )
     parser.add_argument(
