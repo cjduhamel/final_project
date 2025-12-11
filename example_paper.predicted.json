@@ -1,0 +1,367 @@
+{
+  "paper_title": "Machine Learning Techniques for Pile‑Up Rejection in Cryogenic Calorimeters",
+  "paper_authors": "G. Fantini1, A. Armatol, E. Armengaud, W. Armstrong, C. Augier, F. T. Avignone III",
+  "paragraphs": [
+    "CUORE Upgrade with Particle IDentification (CUPID) is a foreseen ton-scale array of Li2MoO4 (LMO) cryogenic calorimeters with double readout of heat and light signals. Its scientific goal is to fully explore the inverted hierarchy of neutrino masses in the search for neutrinoless double beta decay of 100Mo. Pile-up of standard double beta decay of the candidate isotope is a relevant background. We generate pile-up heat events via injection of Joule heater pulses with a programmable waveform generator in a small array of LMO crystals operated underground in the Laboratori Nazionali del Gran Sasso, Italy. This allows us to label pile-up pulses and control both time difference and underlying amplitudes of individual heat pulses in the data. We present the performance of supervised learning classifiers on data and the attained pile-up rejection efficiency.",
+    "Neutrinoless double beta decay (0nuBB) is a posited lepton number violating process that would probe the Majorana nature of neutrinos. Sensitive searches for such decay have started exploring the inverted hierarchy region of neutrino masses. To do so, they have reached high mass of candidate emitter nuclei, low background radioactivity, and good energy resolution. Cryogenic calorimeters have yielded some of the best energy resolutions in 0 searches to date.",
+    "The CUORE experiment has reached the ton scale of detector mass, an energy resolution of ~7.8 keV and a background index in the region of interest for 0 of 1.4 × 10−2 counts/(keV kg year), dominated by partly contained decays. CUORE Upgrade with Particle Identification (CUPID) aims at fully exploring the inverted hierarchy region of neutrino masses, corresponding to half-life sensitivities of > 10^27 year. It will use the successful cryogenic infrastructure that hosts CUORE to deploy a ton-scale array of Li2MoO4 (LMO) scintillating crystal bolometers equipped with Ge bolometer light detectors (LD) to achieve simultaneous readout of the phonon and scintillation signals. The effectiveness of the double readout technique was proved by the CUPID-0 and CUPID-Mo experiments and will bring the expected background down to 10−4 counts/(keV kg year). The nearly simultaneous occurrence of separate 2 decay events in the same crystal (pile-up) within the time resolution of the detector is an irreducible source of background that needs to be mitigated in the design phase. Given the short half life of 100Mo of 100T1∕2 = 7.1 × 10^18 year and assuming ~300 g mass, 100% enrichment in 100Mo and a 1 ms resolving time, the expected background contribution from pile-up events is 3.5 × 10−4 counts/(keV kg year).",
+    "CUPID will use neutron-transmutation-doped (NTD) thermistors to read out the phonon signal on both LMOs and LDs. The rise time of thermal pulses is a function of the NTD working resistance, which is itself a function of temperature, and of the capacitance of the readout line. A campaign of measurements was carried out in the Laboratori Nazionali del Gran Sasso (LNGS) to study the time resolution for pile-up discrimination of LMO crystals. An analysis based on optimal filtering (OF) of the reconstructed pulses showed a > 90% pile-up discrimination efficiency down to Δt ~ 1 ms. This work is aimed at exploring the effectiveness of alternative analysis approaches. We analyze the same data with a deep learning classification algorithm.",
+    "An array of 8 cubic LMO detectors 45 × 45 × 45 mm^3 arranged in a tower of 2 floors of 4 crystals each was operated at ~18 mK temperature in the Hall C facility at LNGS between summer 2019 and spring 2020. Each crystal faced two light detector Ge disks; the crystals on the bottom floor were wrapped in a reflecting foil. The shape and size of LMO crystals resemble the envisioned CUPID design. Three LMO crystals were equipped with a functioning Si heater, which was driven by an arbitrary function generator (Tektronix AFG1062). All detectors were equipped with NTD thermistors, biased with a constant current. The working resistance of the NTDs was in the (10–50) MΩ range. The typical rise time of pulses was ~15 ms. Each NTD was low-pass filtered (Bessel-Thomson) with a cutoff frequency of 63 Hz and the voltage at its ends continuously digitized and stored on disk at 2 kHz sampling frequency. A derivative trigger algorithm was used to identify pulses. Triggered pulses were enclosed in 5 s windows, with 1 s time before the trigger (pre-trigger) used as a proxy for the temperature before the pulse. Random triggers were fired throughout the data taking to collect noise samples.",
+    "We performed reference heater pulse generation paying special attention to the accurate reproduction of the pulse rise time with respect to events originating from natural radioactivity (physics pulses). We excited the Si heaters with waveforms w(t; A, τ) of square, triangular (sharp rise, linear fall), and exponential shape with given voltage amplitude A and typical time τ. We found that despite their different origin, triangular-shaped heater excitations best reproduced the rising edge of physics pulses. We tuned the A and τ parameters of each waveform to reconstruct in the (1–2.5) MeV energy range and as close as possible to the mean of the rise time distribution of physics pulses. The sample of reference (single) heater pulses mimics the detector response to single decay signal events. The time between one pulse generation and the following one was set to 15 s, in order to let the detector return to the initial condition. To generate heater pile-up pulses at a time distance Δt, we superimposed excitations of the Si heater as w^(1)(t; A1, A2, τ) = w(t; A1, τ) + w(t + Δt; A2, τ). Let r = A1 / A2 be the amplitude ratio between the excitations. In order to explore amplitude ratios in the range r = 0.24–1.4, we fixed A1 = 170 mV and varied A2 = 40–240 mV in steps of 50 mV. We explored Δt = 1–40 ms. For each doublet (r, Δt), we collected a sample of ~100 pulses.",
+    "The data analysis can be divided into two steps, a low-level processing and high-level analysis. The former is aimed at selecting a clean sample of heater pulses; the latter is the actual pile-up discrimination analysis. This study closely follows previous work as far as the low-level processing is concerned and implements machine learning algorithms in the high-level analysis step.",
+    "The low-level processing acts on 5 s time windows (waveforms) around triggered events. Each waveform is filtered with an optimal filter. The energy of each event is obtained by calibrating the amplitude of filtered pulses with a 232Th source. We reject waveforms that contain more than one triggered pulse, or where the pre-trigger slope is not compatible with zero. To discriminate heater from physics pulses, we first select events according to their timestamp. Then, for each pulser configuration, we further restrict our sample of heater pulses to those that fulfill |E − E_med| < 5 × E_MAD, where E is the reconstructed energy, E_med is the median reconstructed energy and E_MAD is the median absolute deviation. Equivalent results can be obtained replacing the energy variable in this selection with the raw amplitude of the pulse before filtering, effectively decoupling the deep learning algorithm from other steps of the analysis. Since the rate of physics pulses is much lower than the one of heater pulses, this procedure is effective in removing the outliers of the heater pulse distribution due to either natural radioactivity, unidentified pile-up events or pulses produced in unstable detector conditions.",
+    "The high-level analysis is based on the Keras implementation of a convolutional neural network (CNN) classifier algorithm. The CNN was designed to read full windows of raw pulses, before any optimal filtering is applied. We preprocess the data by subtracting the average sampled voltage in the pre-trigger part of the pulse (baseline) and linearly scaling individual pulses to obtain unit amplitude.",
+    "The CNN includes 10 deep convolutional blocks, each made of 8 filters 20 samples long with a ReLU activation function, followed by a MaxPooling layer with a factor 2 subsampling. A fully connected feed-forward classifier layer connects to the output layer with a Softmax activation function. Training was performed by minimizing a categorical cross-entropy loss function for 200 epochs with the Adam optimization algorithm and a constant learning rate of 10^−4.",
+    "Due to the small size of the available dataset, we rely on cross-validation techniques to assess the performance of the CNN model to classify pile-up events. We use a fivefold cross-validation. We randomize the data and split them into 5 nonoverlapping subsets. From each of the subsets, we retain a 20% fraction of events to assess the model performance after training is completed (test set). We further split the remaining part to build a training set (80%) and a validation set (20%). We train independently 5 identical CNN models with the same choice of hyperparameters (learning rate, number of epochs, etc.) and architecture (layer structure). We optimize hyperparameters keeping the test sets blinded. The output layer of the CNN returns a classifier score in the interval (0, 1). For each data subset, we compute the predicted score on the test set using the corresponding CNN model and compare the prediction with the label assigned to each test pulse according to its timestamp. We evaluate the classification efficiency as a function of Δt as the ratio between the number of correctly labeled events and the total number of events. We fit the classification efficiency curve (Fig. 1) with an exponential saturation function ε(Δt) = p0 (1 − e^(−Δt / p1)) and define the pile-up time resolution of each channel as the value of Δt > 0 at which the 90% classification efficiency is reached.",
+    "We present the performance of a new technique based on a deep learning classifier to discriminate pile-up events in cryogenic LMO bolometers. The classifier is trained on single-pulse and pile-up samples generated by exciting a Si heater with a programmable function generator and tested on an independent sample of events generated with the same technique. We achieve a > 90% reconstruction efficiency of signal events and a > 90% rejection efficiency for Δt > 1–2 ms depending on the channel. The deep-learning and optimal-filter-based pile-up rejection approaches yield so far equivalent results.",
+    "This work is part of a technical optimization campaign of the CUPID detector design and data processing techniques. A detailed Monte Carlo simulation of the detector response incorporating pile-up rejection is underway to disentangle the interplay of parameters such as the noise level, sampling and Bessel cutoff frequencies, pulse rise time and signal-to-noise ratio. Preliminary results indicate that similar performances can be achieved for physics pulses. In future measurements, we plan to improve the cryogenic stability, noise conditions and excitation methods to better reproduce both the rising and falling edge of physics pulses and eventually explore smaller pile-up time differences."
+  ],
+  "references": [
+    {
+      "title": "Improved Limit on Neutrinoless Double-Beta Decay in Te-130 with CUORE",
+      "authors": "D.Q. Adams1, C. Alduino, K. Alfonso, F.T. Avignone III, Azzolini, G. Bari, F. Bellini5, G. Benato, M. Biassoni",
+      "text": "We report new results from the search for neutrinoless double-beta decay in 130Te with the CUORE detector. This search benefits from a fourfold increase in exposure, lower trigger thresholds, and analysis improvements relative to our previous results. We observe a background of (1.38±0.07)×10−2  counts/(keV kg yr)) in the 0⁢𝜈⁢𝛽⁢𝛽 decay region of interest and, with a total exposure of 372.5 kg yr, we attain a median exclusion sensitivity of 1.7 ×1025  yr. We find no evidence for 0⁢𝜈⁢𝛽⁢𝛽 decay and set a 90% credibility interval Bayesian lower limit of 3.2 ×1025  yr on the 130Te half-life for this process. In the hypothesis that 0⁢𝜈⁢𝛽⁢𝛽 decay is mediated by light Majorana neutrinos, this results in an upper limit on the effective Majorana mass of 75–350 meV, depending on the nuclear matrix elements used.",
+      "referenced_in_paragraphs": [
+        1,
+        2
+      ],
+      "predicted_citations": {
+        "agg_method": "mean",
+        "top_k": 3,
+        "paragraphs": [
+          {
+            "paragraph_idx": 2,
+            "score": 0.7634459733963013
+          },
+          {
+            "paragraph_idx": 1,
+            "score": 0.65743038803339
+          },
+          {
+            "paragraph_idx": 12,
+            "score": 0.5468375235795975
+          }
+        ]
+      }
+    },
+    {
+      "title": "CUPID pre-CDR",
+      "authors": "CUPID Interest Group",
+      "text": "The study of neutrinoless double beta decay (0νββ) is one of the most sensitive low-energy searches for new physics [1]. If observed, this very elusive decay would imply a lepton number violation by two units and would prove the existence of massive Majorana neutrinos [1–3]. The decay produces a monochromatic peak in the kinetic energy sum spectrum of the two emitted electrons. The only necessary and sufficient signature used to distinguish the 0νββ decay from peaks produced by other processes (e.g. the full energy peaks due to environmental gamma lines) is its position at the 0νββ transition energy. Excellent energy resolution, large detector masses, and very small backgrounds are of paramount importance for the discovery potential of any experiment. Significant experimental efforts in recent years have improved the 0νββ sensitivity in several isotopes, and with a variety of detection techniques [4, 5]. The race towards discovery is characterized by the increase in the experimental mass, which has led to the construction of ton-scale detectors. With the increase in mass has also come the difficult but steady progress in removing the spurious background events that can jeopardize the observation of a 0νββ decay. Background reduction presents the hardest challenge. This has led to the development of improved detection techniques and to the study of different 0νββ candidate nuclei. It has also driven the painstaking process of improving the radiopurity of the detector components.",
+      "referenced_in_paragraphs": [
+        2
+      ],
+      "predicted_citations": {
+        "agg_method": "mean",
+        "top_k": 3,
+        "paragraphs": [
+          {
+            "paragraph_idx": 1,
+            "score": 0.7678778320550919
+          },
+          {
+            "paragraph_idx": 2,
+            "score": 0.6876479585965475
+          },
+          {
+            "paragraph_idx": 12,
+            "score": 0.5563258230686188
+          }
+        ]
+      }
+    },
+    {
+      "title": "A CUPID Li2100MoO4 scintillating bolometer tested in the CROSS underground facility",
+      "authors": "A. Armatol, E. Armengaud, W. Armstrong, C. Augier, F.T. Avignone III, O. Azzolini, I.C. Bandac, A.S. Barabash, G. Bari, A. Barresi",
+      "text": "A scintillating bolometer based on a large cubic Li2100MoO4 crystal (45 mm side) and a Ge wafer (scintillation detector) has been operated in the CROSS cryogenic facility at the Canfranc underground laboratory in Spain. The dual-readout detector is a prototype of the technology that will be used in the next-generation 0ν2β experiment CUPID . The measurements were performed at 18 and 12 mK temperature in a pulse tube dilution refrigerator. This setup utilizes the same technology as the CUORE cryostat that will host CUPID and so represents an accurate estimation of the expected performance. The Li2100MoO4 bolometer shows a high energy resolution of 6 keV FWHM at the 2615 keV γ line. The detection of scintillation light for each event triggered by the Li2100MoO4 bolometer allowed for a full separation (∼8σ) between γ(β) and α events above 2 MeV . The Li2100MoO4 crystal also shows a high internal radiopurity with 228Th and 226Ra activities of less than 3 and 8 μBq/kg, respectively. Taking also into account the advantage of a more compact and massive detector array, which can be made of cubic-shaped crystals (compared to the cylindrical ones), this test demonstrates the great potential of cubic Li2100MoO4 scintillating bolometers for high-sensitivity searches for the 100Mo 0ν2β decay in CROSS and CUPID projects.",
+      "referenced_in_paragraphs": [
+        2
+      ],
+      "predicted_citations": {
+        "agg_method": "mean",
+        "top_k": 3,
+        "paragraphs": [
+          {
+            "paragraph_idx": 2,
+            "score": 0.7566646387179693
+          },
+          {
+            "paragraph_idx": 12,
+            "score": 0.7497861087322235
+          },
+          {
+            "paragraph_idx": 0,
+            "score": 0.5334601104259491
+          }
+        ]
+      }
+    },
+    {
+      "title": "Final Result of CUPID-0 Phase-I in the Search for the 82Se Neutrinoless Double-𝛽 Decay",
+      "authors": "O. Azzolini1, J.W. Beeman, F. Bellini3, M. Beretta, M. Biassoni, C. Brofferio, C. Bucci, S. Capelli, L. Cardani",
+      "text": "CUPID-0 is the first pilot experiment of CUPID, a next-generation project for the measurement of neutrinoless double beta decay (0⁢𝜈⁢DBD) with scintillating bolometers. The detector, consisting of 24 enriched and 2 natural ZnSe crystals, has been taking data at Laboratori Nazionali del Gran Sasso from June 2017 to December 2018, collecting a 82Se exposure of 5.29  kg×yr. In this Letter we present the phase-I results in the search for 0⁢𝜈⁢DBD. We demonstrate that the technology implemented by CUPID-0 allows us to reach the lowest background for calorimetric experiments: (3.5+1.0−0.9)×10−3  counts/(keV kg yr). Monitoring 3.88×1025 82Se nuclei×yr we reach a 90% credible interval median sensitivity of 𝑇0⁢𝜈1/2 >5.0 ×1024  yr and set the most stringent limit on the half-life of 82Se 0⁢𝜈⁢DBD: 𝑇0⁢𝜈 1/2 >3.5 ×1024  yr (90% credible interval), corresponding to m𝛽⁢𝛽<(311–638)  meV depending on the nuclear matrix element calculations.",
+      "referenced_in_paragraphs": [
+        1,
+        2
+      ],
+      "predicted_citations": {
+        "agg_method": "mean",
+        "top_k": 3,
+        "paragraphs": [
+          {
+            "paragraph_idx": 2,
+            "score": 0.7479508618513743
+          },
+          {
+            "paragraph_idx": 12,
+            "score": 0.591051958501339
+          },
+          {
+            "paragraph_idx": 1,
+            "score": 0.5786487907171249
+          }
+        ]
+      }
+    },
+    {
+      "title": "CUPID-0: A double-readout cryogenic detector for Double Beta Decay search",
+      "authors": "O. Azzolini, J.W. Beeman, F. Bellini, M. Beretta, M. Biassoni, C. Brofferio",
+      "text": "CUPID-0 is the first large mass neutrino-less double beta decay experiment based on cryogenic calorimeters with dual read-out of light and heat for background rejection. The detector assembly, consisting of 26 ZnSe crystals, 2 natural and 24 enriched at 95% in  82Se, all coupled with bolometric light detectors, has been constructed respecting very strict protocols and procedures, from the material selection during crystal growth to the new and innovative detector framework, in the attempt to achieve the best performance of the array. The successful construction of the detector lead to promising preliminary results, here presented. The array is in fact taking data underground at LNGS (Italy) since March 2017 and the particle identification, enabled by the light read-out, provides an unprecedented background level, for cryogenic calorimeters, of only 3.2 counts in the region of interest of the search for  82Se, namely around 3 MeV.",
+      "referenced_in_paragraphs": [
+        2
+      ],
+      "predicted_citations": {
+        "agg_method": "mean",
+        "top_k": 3,
+        "paragraphs": [
+          {
+            "paragraph_idx": 2,
+            "score": 0.7773482203483582
+          },
+          {
+            "paragraph_idx": 12,
+            "score": 0.7270135879516602
+          },
+          {
+            "paragraph_idx": 1,
+            "score": 0.6221610829234123
+          }
+        ]
+      }
+    },
+    {
+      "title": "Evidence of Single State Dominance in the Two-Neutrino Double-𝛽 Decay of 82 Se with CUPID-0",
+      "authors": "O. Azzolini1, J.W. Beeman, F. Bellini3, M. Beretta, M. Biassoni, C. Brofferio, C. Bucci, S. Capelli, L. Cardani",
+      "text": "We report on the measurement of the two-neutrino double-𝛽 decay of 82Se performed for the first time with cryogenic calorimeters, in the framework of the CUPID-0 experiment. With an exposure of 9.95 kg yr of Zn⁢ 82Se, we determine the two-neutrino double-𝛽 decay half-life of 82Se with an unprecedented precision level, 𝑇2⁢𝜈 1/2=[8.60±0.03⁢(stat)⁢ +0.19−0.13⁢(syst)]×1019  yr. The very high signal-to-background ratio, along with the detailed reconstruction of the background sources allowed us to identify the single state dominance as the underlying mechanism of such a process, demonstrating that the higher state dominance hypothesis is disfavored at the level of 5.5⁢𝜎.",
+      "referenced_in_paragraphs": [
+        2
+      ],
+      "predicted_citations": {
+        "agg_method": "mean",
+        "top_k": 3,
+        "paragraphs": [
+          {
+            "paragraph_idx": 2,
+            "score": 0.6803984642028809
+          },
+          {
+            "paragraph_idx": 12,
+            "score": 0.6280410885810852
+          },
+          {
+            "paragraph_idx": 1,
+            "score": 0.5647129416465759
+          }
+        ]
+      }
+    },
+    {
+      "title": "New Limit for Neutrinoless Double-Beta Decay of 100Mo from the CUPID-Mo Experiment",
+      "authors": "E. Armengaud, C. Augier, A.S. Barabash, F. Bellini, G. Benato, A. Benoît, M. Beretta, L. Bergé, J. Billard",
+      "text": "The CUPID-Mo experiment at the Laboratoire Souterrain de Modane (France) is a demonstrator for CUPID, the next-generation ton-scale bolometric 0⁢𝜈⁢𝛽⁢𝛽 experiment. It consists of a 4.2 kg array of 20 enriched Li2 100Mo ⁢O4 scintillating bolometers to search for the lepton-number-violating process of 0⁢𝜈⁢𝛽⁢𝛽 decay in 100Mo With more than one year of operation (100Mo exposure of 1.17  kg×yr for physics data), no event in the region of interest and, hence, no evidence for 0⁢𝜈⁢𝛽⁢𝛽 is observed. We report a new limit on the half-life of 0⁢𝜈⁢𝛽⁢𝛽 decay in 100Mo of 𝑇1/2 >1.5 ×1024  yr at 90% C.I. The limit corresponds to an effective Majorana neutrino mass ⟨𝑚𝛽⁢𝛽⟩<(0.31–0.54)  eV, dependent on the nuclear matrix element in the light Majorana neutrino exchange interpretation.",
+      "referenced_in_paragraphs": [
+        1,
+        2
+      ],
+      "predicted_citations": {
+        "agg_method": "mean",
+        "top_k": 3,
+        "paragraphs": [
+          {
+            "paragraph_idx": 2,
+            "score": 0.7515347898006439
+          },
+          {
+            "paragraph_idx": 1,
+            "score": 0.5824296399950981
+          },
+          {
+            "paragraph_idx": 12,
+            "score": 0.5696680322289467
+          }
+        ]
+      }
+    },
+    {
+      "title": "Processing the signals from solid-state detectors in elementary-particle physics",
+      "authors": "E. Gatti, P.F. Manfredi",
+      "text": "More than fifteen years ago a silicon active target made of five detectors was employed on a CERN beam to investigate coherent interactions of ~-mesons on the Si nucleus [1]. That was probably the first time that a solidstate device was used as an active target in the beam of a large accelerator. Some years afterwards the same technique was adopted in another coherentproduction experiment carried out at higher energies at the accelerator of Serpukhov [2]. In both experiments the active target consisted of a telescope of surface barrier, totally depleted silicon detectors, aligned along the beam axis at small mutual distances. The configuration of an active target used in the coherent-production experiment is shown in fig. 1.1. The target used in the Scrpukhov experiment consisted of ten 200 ~m thick detectors with an active area of 3.5 cm ~ each. A device of the type shown in fig. 1.1 has a high space resolution in the beam direction. It allows the measurement of the longitudinalionization density as a function of the position and 7 therefor% the pattern of the charged multiplicity",
+      "referenced_in_paragraphs": [
+        3,
+        7
+      ],
+      "predicted_citations": {
+        "agg_method": "mean",
+        "top_k": 3,
+        "paragraphs": [
+          {
+            "paragraph_idx": 12,
+            "score": 0.615264005959034
+          },
+          {
+            "paragraph_idx": 11,
+            "score": 0.49559955298900604
+          },
+          {
+            "paragraph_idx": 2,
+            "score": 0.48100658257802326
+          }
+        ]
+      }
+    },
+    {
+      "title": "Novel technique for the study of pile-up events in cryogenic bolometers",
+      "authors": "A. Armatol, E. Armengaud, W. Armstrong, C. Augier, F.T. Avignone III, O. Azzolini, I.C. Bandac, A.S. Barabash, G. Bari, A. Barresi",
+      "text": "Precise characterization of detector time resolution is of crucial importance for next-generation cryogenic-bolometer experiments searching for neutrinoless double-beta decay, such as CUPID, in order to reject background due to pile-up of two-neutrino double-beta decay events. In this paper, we describe a technique developed to study the pile-up rejection capability of cryogenic bolometers. Our approach, which consists of producing controlled pile-up events with a programmable waveform generator, has the benefit that we can reliably and reproducibly control the time separation and relative energy of the individual components of the generated pile-up events. The resulting data allow us to optimize and benchmark analysis strategies to discriminate between individual and pile-up pulses. We describe a test of this technique performed with a small array of detectors at the Laboratori Nazionali del Gran Sasso, in Italy; we obtain a 90% rejection efficiency against pulser-generated pile-up events with rise time of ~15ms down to time separation between the individual events of about 2ms.",
+      "referenced_in_paragraphs": [
+        3,
+        4,
+        5,
+        10
+      ],
+      "predicted_citations": {
+        "agg_method": "mean",
+        "top_k": 3,
+        "paragraphs": [
+          {
+            "paragraph_idx": 11,
+            "score": 0.7647125571966171
+          },
+          {
+            "paragraph_idx": 12,
+            "score": 0.7604914158582687
+          },
+          {
+            "paragraph_idx": 2,
+            "score": 0.7066998183727264
+          }
+        ]
+      }
+    },
+    {
+      "title": "Characterization of cubic Li2 100 MoO4 crystals for the CUPID experiment",
+      "authors": "A. Armatol, E. Armengaud, W. Armstrong, C. Augier, F.T. Avignone III, O. Azzolini, I.C. Bandac, A.S. Barabash, G. Bari, A. Barresi",
+      "text": "The CUPID Collaboration is designing a tonne-scale, background-free detector to search for double beta decay with sufficient sensitivity to fully explore the parameter space corresponding to the inverted neutrino mass hierarchy scenario. One of the CUPID demonstrators, CUPID-Mo, has proved the potential of enriched LiMo crystals as suitable detectors for neutrinoless double beta decay search. In this work, we characterised cubic crystals that, compared to the cylindrical crystals used by CUPID-Mo, are more appealing for the construction of tightly packed arrays. We measured an average energy resolution of () keV FWHM in the region of interest, approaching the CUPID target of 5 keV FWHM. We assessed the identification of particles with and without a reflecting foil that enhances the scintillation light collection efficiency, proving that the baseline design of CUPID already ensures a complete suppression of this -induced background contribution. We also used the collected data to validate a Monte Carlo simulation modelling the light collection efficiency, which will enable further optimisations of the detector.",
+      "referenced_in_paragraphs": [
+        1,
+        6
+      ],
+      "predicted_citations": {
+        "agg_method": "mean",
+        "top_k": 3,
+        "paragraphs": [
+          {
+            "paragraph_idx": 2,
+            "score": 0.7803573310375214
+          },
+          {
+            "paragraph_idx": 12,
+            "score": 0.6228605806827545
+          },
+          {
+            "paragraph_idx": 0,
+            "score": 0.5824322054783503
+          }
+        ]
+      }
+    },
+    {
+      "title": "Keras",
+      "authors": "F. Chollet",
+      "text": "A superpower for ML developers Keras is a deep learning API designed for human beings, not machines. Keras focuses on debugging speed, code elegance & conciseness, maintainability, and deployability. When you choose Keras, your codebase is smaller, more readable, easier to iterate on.",
+      "referenced_in_paragraphs": [
+        8
+      ],
+      "predicted_citations": {
+        "agg_method": "mean",
+        "top_k": 3,
+        "paragraphs": [
+          {
+            "paragraph_idx": 8,
+            "score": 0.44341152906417847
+          },
+          {
+            "paragraph_idx": 11,
+            "score": 0.40413668006658554
+          },
+          {
+            "paragraph_idx": 6,
+            "score": 0.398247371117274
+          }
+        ]
+      }
+    },
+    {
+      "title": "Adam: A Method for Stochastic Optimization",
+      "authors": "Diederik P. Kingma, Jimmy Ba",
+      "text": "We introduce Adam, an algorithm for first-order gradient-based optimization of stochastic objective functions, based on adaptive estimates of lower-order moments. The method is straightforward to implement, is computationally efficient, has little memory requirements, is invariant to diagonal rescaling of the gradients, and is well suited for problems that are large in terms of data and/or parameters. The method is also appropriate for non-stationary objectives and problems with very noisy and/or sparse gradients. The hyper-parameters have intuitive interpretations and typically require little tuning. Some connections to related algorithms, on which Adam was inspired, are discussed. We also analyze the theoretical convergence properties of the algorithm and provide a regret bound on the convergence rate that is comparable to the best known results under the online convex optimization framework. Empirical results demonstrate that Adam works well in practice and compares favorably to other stochastic optimization methods. Finally, we discuss AdaMax, a variant of Adam based on the infinity norm.",
+      "referenced_in_paragraphs": [
+        9
+      ],
+      "predicted_citations": {
+        "agg_method": "mean",
+        "top_k": 3,
+        "paragraphs": [
+          {
+            "paragraph_idx": 9,
+            "score": 0.37354586521784466
+          },
+          {
+            "paragraph_idx": 10,
+            "score": 0.34289699296156567
+          },
+          {
+            "paragraph_idx": 12,
+            "score": 0.3200254812836647
+          }
+        ]
+      }
+    },
+    {
+      "title": "A survey of cross-validation procedures for model selection",
+      "authors": "Sylvain Arlot, Alain Celisse",
+      "text": "Used to estimate the risk of an estimator or to perform model selection, cross-validation is a widespread strategy because of its simplicity and its (apparent) universality. Many results exist on model selection performances of cross-validation procedures. This survey intends to relate these results to the most recent advances of model selection theory, with a particular emphasis on distinguishing empirical statements from rigorous theoretical results. As a conclusion, guidelines are provided for choosing the best cross-validation procedure according to the particular features of the problem in hand.",
+      "referenced_in_paragraphs": [
+        9
+      ],
+      "predicted_citations": {
+        "agg_method": "mean",
+        "top_k": 3,
+        "paragraphs": [
+          {
+            "paragraph_idx": 3,
+            "score": 0.34670669337113696
+          },
+          {
+            "paragraph_idx": 9,
+            "score": 0.34069395065307617
+          },
+          {
+            "paragraph_idx": 10,
+            "score": 0.3388376633326213
+          }
+        ]
+      }
+    }
+  ]
+}

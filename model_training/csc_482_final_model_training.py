@@ -860,7 +860,7 @@ with open(os.path.join(SAVE_DIR, "inference_config.json"), "w") as f:
 
 print(f"Saved all to: {os.path.abspath(SAVE_DIR)}")
 
-!zip -r saved_model.zip saved_model
+#!zip -r saved_model.zip saved_model
 
 
 from google.colab import files

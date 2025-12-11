@@ -16,5 +16,8 @@ build/
 *.run.xml
 *.bcf
 .DS_Store
-saved_model
+saved_model/
 saved_model.zip
+example_paper_reports/
+new_saved_model/
+new_saved_model.zip
