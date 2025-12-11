@@ -183,7 +183,7 @@ We format each pair as a standard Transformer sequence pair:
 We use the SciBERT tokenizer with
 \begin{itemize}
     \item \verb|max_length = 512|,
-    \item \verb|truncation = "only_second"| (if we need to truncate the input to match teh 512 tokens, we only truncate from the ref block and not the original sentence),
+    \item \verb|truncation = "only_second"| (if we need to truncate the input to match the 512 tokens, we only truncate from the ref block and not the original sentence),
     \item padding to \verb|max_length| during training for efficient batching.
 \end{itemize}
 
