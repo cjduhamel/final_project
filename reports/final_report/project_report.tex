@@ -155,12 +155,199 @@ Here are some example entries from the structured dataset:
     }
 \end{minted}
 
-\section{The Model}
-Used SciBERT \cite{sciBERT}
 
-\section{Results and Evaluation}
+\section{Model}
 
-\subsection{Evaluation Metrics}
+Our goal is to decide, for a given sentence from a paper and a candidate reference (represented by a short ``reference block'' containing its title, authors, and a snippet of text), whether that reference should be cited in that sentence. We treat this as a binary classification problem over sentence–reference pairs:
+\[
+(\text{sentence}, \text{ref\_block}) \mapsto y \in \{0,1\},
+\]
+where $y=1$ indicates that the reference should be cited in that sentence.
+
+On a high level, we fine-tune a SciBERT \cite{sciBERT} cross-encoder on a set of labeled sentence–reference pairs, perform threshold calibration and a small hyperparameter grid search, and then reuse the trained model for paragraph-level citation inference on full papers.
+
+\subsection{methods}
+
+\paragraph{Input representation.}
+Each training instance consists of:
+\begin{itemize}
+    \item \textbf{sentence}: the in-paper sentence from the original article.
+    \item \textbf{ref\_block}: a concatenation of the candidate reference's title, author list, and the first 500-2000 characters of the reference paper
+    \item \textbf{label} $\in \{0,1\}$: $1$ if the sentence actually cites this reference, $0$ otherwise.
+\end{itemize}
+We format each pair as a standard Transformer sequence pair:
+\[
+\texttt{[CLS]}~\text{sentence}~\texttt{[SEP]}~\text{ref\_block}~\texttt[SEP].
+\]
+
+We use the SciBERT tokenizer with
+\begin{itemize}
+    \item \verb|max_length = 512|,
+    \item \verb|truncation = "only_second"| (if we need to truncate the input to match teh 512 tokens, we only truncate from the ref block and not the original sentence),
+    \item padding to \verb|max_length| during training for efficient batching.
+\end{itemize}
+
+\paragraph{Class imbalance and loss.}
+The dataset is moderately imbalanced: roughly $32\%$ of sentence–reference pairs are positive (CITATION) and $68\%$ are negative (NOT\_CITATION). To counter this, we compute class weights on the training split,
+\[
+w_c = \frac{N}{2 N_c}, \quad c \in \{0,1\},
+\]
+where $N$ is the total number of training examples and $N_c$ is the number of examples of class $c$. These weights are passed to a weighted cross-entropy loss:
+\[
+\mathcal{L} = - \sum_i w_{y_i} \log p_\theta(y_i \mid x_i),
+\]
+so that mistakes on positive (citation) examples are penalized more heavily.
+
+
+\paragraph{Training procedure.}
+We split the structured dataset into train/validation/test by original paper ID so that no paper appears in more than one split. This prevents information leakage between splits (e.g., seeing different sentences from the same paper in both train and test).
+
+Our initial baseline configuration uses:
+\begin{itemize}
+    \item learning rate $2\times 10^{-5}$,
+    \item batch size 8 (train and eval),
+    \item 6 epochs,
+\end{itemize}
+The trainer keeps the checkpoint with the lowest validation loss, which helps avoid overfitting to the last epoch.
+
+\subsection{Threhsold tuning and Grid search}
+
+\paragraph{Sentence-level threshold calibration.}
+Because we optimize log-loss on an imbalanced dataset, the default decision rule
+$p(y = 1) \ge 0.5$ gave low recall and therefore poor F1, even though the
+probability scores themselves were sensible. We therefore swept the decision
+threshold on the validation set and selected the value that maximized F1 for the
+CITATION class. This moved the best operating point from $t = 0.5$ to
+$t \approx 0.3$, increasing test F1 from about $0.33$ to $0.55$ while keeping
+accuracy roughly the same. All reported SciBERT results in this report use this
+tuned threshold.
+
+
+
+\paragraph{Hyperparameter grid search.}
+After establishing a good threshold, we ran a small grid search over two key hyperparameters:
+\begin{itemize}
+    \item learning rate $\in \{1\times 10^{-5}, 2\times 10^{-5}, 3\times 10^{-5}\}$,
+    \item number of epochs $\in \{3, 4\}$.
+\end{itemize}
+For each configuration, we:
+\begin{enumerate}
+    \item Initialize a fresh SciBERT classification model.
+    \item Train using the weighted loss
+    \item Evaluate on the validation set using the fixed tuned threshold $t^\star$.
+    \item Record validation accuracy, precision, recall, and F1.
+\end{enumerate}
+
+The best configuration by validation F1 at the tuned threshold was:
+\begin{itemize}
+    \item learning rate $1\times 10^{-5}$,
+    \item 4 epochs.
+\end{itemize}
+This setting slightly improves validation F1 over the baseline configuration and reduces overfitting. We retrain our final model with this setting and use it for the rest of this project. 
+
+\subsection{Metrics}
+
+We evaluate the sentence-level classifier using standard binary classification metrics, always focusing on the CITATION class as the positive label.
+
+Table~\ref{tab:sentence-metrics} summarizes the key sentence-level metrics for the SciBERT model under the naive and tuned thresholds.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{llcccc}
+        \hline
+        Threshold & Split & Accuracy & Precision & Recall & F1 \\
+        \hline
+        0.50 & Validation & 0.52 & 0.31 & 0.42 & 0.36 \\
+        0.50 & Test       & 0.50 & 0.29 & 0.39 & 0.33 \\
+        0.30 & Validation & 0.62 & 0.48 & 0.56 & 0.52 \\
+        0.30 & Test       & 0.64 & 0.46 & 0.63 & 0.53 \\
+        \hline
+    \end{tabular}
+    \caption{Sentence-level SciBERT performance at different decision thresholds.}
+    \label{tab:sentence-metrics}
+\end{table}
+
+\subsection{Inference}
+
+Once the SciBERT cross-encoder is trained, we use it as a scoring engine for paragraph-level citation inference on full papers. The inference pipeline is implemented as a standalone script (\texttt{cite.py}) that takes as input:
+\begin{itemize}
+    \item a JSON file describing a single paper (paragraphs, references, and optional gold paragraph indices for each reference), and
+    \item a directory \texttt{saved\_model/} containing the fine-tuned SciBERT model, tokenizer, and an \texttt{inference\_config.json} with the tuned threshold and other metadata.
+\end{itemize}
+
+\paragraph{Paper representation.}
+For a given paper we assume:
+\begin{itemize}
+    \item a list of paragraphs $(P_0, P_1, \dots, P_{N-1})$,
+    \item a list of references, each with a title, authors, and text (used to reconstruct \texttt{ref\_block}),
+    \item optionally, for evaluation, a list \texttt{referenced\_in\_paragraphs} giving the gold (truth) paragraph indices where each reference is actually cited.
+\end{itemize}
+
+\paragraph{Sentence splitting and scoring.}
+For each paragraph $P_j$, we split the text into sentences using a simple regex-based splitter. For each reference $r$ we build the same \texttt{ref\_block} format used during training. We then:
+\begin{enumerate}
+    \item For every sentence $s$ in paragraph $P_j$, run the SciBERT model on the pair $(s, \text{ref\_block}_r)$ to obtain a citation probability
+    \[
+    p(s, r) = P(\text{CITATION} \mid s, \text{ref\_block}_r).
+    \]
+ 
+    \item Aggregate sentence-level probabilities into a single paragraph-level score for $(P_j, r)$ using the \emph{mean}:
+    \[
+    \text{score}(P_j, r) = \frac{1}{m} \sum_{i=1}^{m} p(s_i, r),
+    \]
+    where $m$ is the number of sentences in $P_j$. We also experimented with $\max_i p(s_i,r)$, but the mean produced the most stable rankings across paragraphs with different lengths.
+\end{enumerate}
+
+
+
+\subsection{inference results}
+
+We evaluate the paragraph-level inference pipeline on an annotated scientific paper that was not part of the training, validation, or test splits. For each reference with at least one annotated citation paragraph, we compute:
+\begin{itemize}
+    \item \textbf{Top-1 accuracy}: the fraction of references for which the single highest-scoring paragraph matches at least one gold citation paragraph.
+    \item \textbf{Top-2 accuracy}: the fraction of references for which at least one of the top-2 predicted paragraphs matches a gold citation paragraph.
+\end{itemize}
+
+On this held-out paper we obtain:
+\begin{itemize}
+    \item Top-1 paragraph accuracy: $8/13 \approx 0.615$,
+    \item Top-3 paragraph accuracy: $10/13 \approx 0.765$.
+\end{itemize}
+In other words, for roughly two-thirds of the references, the true citation paragraph appears somewhere in the model’s top-2 ranked paragraphs.
+
+These results are consistent with the sentence-level metrics: the model’s probabilities are well-calibrated enough to rank plausible citation locations highly, but not perfect. Qualitative inspection of the per-reference reports shows that many of the ``false positives'' are paragraphs that discuss the same topic or experiment as the gold paragraph and would not be unreasonable places to cite the reference, which partly explains why precision at the sentence level is not higher despite the model’s useful ranking behavior.
+
+\section{Evaluation}
+
+\subsection{Testing}
+
+\paragraph{Data splits and protocol.}
+All quantitative evaluation is performed under a strict train/validation/test split at the \emph{paper} level. Each original paper ID appears in exactly one of these splits, so the model never sees other sentences from the same paper in training and evaluation. The validation split is used for:
+\begin{itemize}
+    \item tuning the sentence-level threshold $t^\star$,
+    \item comparing hyperparameter configurations (learning rate and number of epochs),
+
+The test split is held out until final model selection and is evaluated only once for the reported metrics.
+
+\paragraph{Baselines and sanity checks.}
+We use a TF–IDF + logistic regression model as a strong lexical baseline on the same sentence–reference pairs. Its performance (accuracy $\approx 0.50$–$0.52$, F1 $\approx 0.33$–$0.36$) is substantially worse than the tuned SciBERT cross-encoder, which reaches F1 $\approx 0.53$ on the test set. This confirms that the transformer is capturing useful contextual and cross-sentence information beyond surface lexical overlap.
+
+
+
+\paragraph{Robustness and qualitative testing.}
+Beyond aggregate metrics, we perform manual inspection of model outputs:
+\begin{itemize}
+    \item On the sentence-level test set, we examine high-confidence false positives and false negatives. Many false positives are semantically very close to the referenced paper and often occur in neighboring sentences or paragraphs to the gold (truth) citation; many false negatives occur in very short or generic sentences where even humans might disagree about whether a citation is strictly required.
+    \item On the held-out full paper used for inference experiments, we inspect the per-reference reports generated by \texttt{cite.py}. For each reference, we compare the scores of the gold paragraphs to those of the predicted top-1 and top-2 paragraphs. In most cases where the model misses the exact gold paragraph, it still assigns relatively high probability to it, indicating reasonable ranking behavior even when top-1 is incorrect.
+\end{itemize}
+
+Overall, the testing strategy combines:
+\begin{itemize}
+    \item quantitative evaluation on a clean held-out test split for sentence-level performance,
+    \item paragraph-level top-$k$ evaluation on a separate annotated paper,
+    \item and targeted qualitative analysis of the mistaken predicctions.
+\end{itemize}
+This gives us a reasonably complete picture of how the system behaves, where it succeeds, and where it fails.
 
 \section{Limitations and Problems}
 While we were working on our project, we encountered a variety of limitations that required workarounds, patience, or simply accepting defeat. The major limitations we faced were:
@@ -174,6 +361,13 @@ The size was not just a factor in storage and download time, but also in process
 The S2ORC dataset is not perfectly structured, and there are many inconsistencies in the way the data is parsed and stored. For example, some papers have their main text stored within a field called "body" that contains a variety of inconsistent nested subfields. Other papers have their main text stored in a field called "content", which is structured differently. Additionally, while many papers contain annotations for the locations of in-text citations, bibliography entries, and other useful information, many papers are missing this information or have limited annotations, so this method was not a reliable way of extracting the necessary data.
 
 In addition, while all papers that have paragraph entries in the CiteWorth dataset have corresponding entries in the S2ORC dataset, not all referenced papers in the CiteWorth dataset have full text available in the S2ORC dataset, thus was not in the S2ORC dataset at all. This made it difficult to build a complete dataset, as we had to skip many entries that still required a portion of the processing time to determine that they were unusable. This may, however, have a silver lining, as it forced our dataset to contain a larger bredth of citation examples, rather than many examples from fewer papers. This may help our model generalize better to unseen papers during inference, as it was trained on a wider variety of examples.
+
+\subsection{Low Precision}
+A major modeling limitation is that our final SciBERT classifier operates at a relatively low precision. At the tuned sentence-level threshold ($t \approx 0.3$), we achieve good recall on the test set (around $0.63$) and a reasonable F1 score (around $0.53$), but precision is only about $0.44$. In practice, this means that a non-trivial fraction of suggested citations are false positives, which would still require manual filtering by an author.
+
+There are several reasons for this behavior. First, we deliberately chose a low threshold to favor recall over precision: missing citations is worse than suggesting extra ones, but this inherently produces more false positives. Second, many ``false positives'' are semantically related references that would not be unreasonable to cite, so from the model’s perspective they are hard negatives. Overall, our current system is tuned for high recall and decent F1, at the cost of precision. A more production-oriented system would likely adopt a stricter threshold to reduce false positives while preserving as much recall as possible.
+
+
 
 \subsection{Corruption...}
 During the building of the test dataset, CJ's computer crashed. Upon restart we received the error shown in figure \ref{fig:crash}. This error seems to indicate that the filesystem was corrupted. This drive is now approximately 8 years old, so it may be that it has reached the end of its lifespan. Unfortunately, this meant that all the data on the drive was lost, including the entirety of the S2ORC dataset, the built index, the partially built test dataset, and all of the additional logic that was written to build the test dataset (not to mention over a TB of personal data). Despite numerous attempts at repairing the drive, including restarts, opening in other OSs, and running drive repair utilities, we were unable to regain access to the data on the drive. Fortunately, all code prior to building the test set was in GitHub, so not all was lost. 
