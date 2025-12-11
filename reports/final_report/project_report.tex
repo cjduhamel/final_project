@@ -177,7 +177,7 @@ Each training instance consists of:
 \end{itemize}
 We format each pair as a standard Transformer sequence pair:
 \[
-\texttt{[CLS]}~\text{sentence}~\texttt{[SEP]}~\text{ref\_block}~\texttt[SEP].
+\texttt{[CLS]}~\text{sentence}~\texttt{[SEP]}~\text{ref\_block}~\texttt{[SEP]}.
 \]
 
 We use the SciBERT tokenizer with
@@ -188,7 +188,7 @@ We use the SciBERT tokenizer with
 \end{itemize}
 
 \paragraph{Class imbalance and loss.}
-The dataset is moderately imbalanced: roughly $32\%$ of sentence–reference pairs are positive (CITATION) and $68\%$ are negative (NOT\_CITATION). To counter this, we compute class weights on the training split,
+The dataset is moderately imbalanced: roughly $32\%$ of sentence-reference pairs are positive (CITATION) and $68\%$ are negative (NOT\_CITATION). To counter this, we compute class weights on the training split,
 \[
 w_c = \frac{N}{2 N_c}, \quad c \in \{0,1\},
 \]
@@ -315,7 +315,7 @@ On this held-out paper we obtain:
 \end{itemize}
 In other words, for roughly two-thirds of the references, the true citation paragraph appears somewhere in the model’s top-2 ranked paragraphs.
 
-These results are consistent with the sentence-level metrics: the model’s probabilities are well-calibrated enough to rank plausible citation locations highly, but not perfect. Qualitative inspection of the per-reference reports shows that many of the ``false positives'' are paragraphs that discuss the same topic or experiment as the gold paragraph and would not be unreasonable places to cite the reference, which partly explains why precision at the sentence level is not higher despite the model’s useful ranking behavior.
+These results are consistent with the sentence-level metrics: the model's probabilities are well-calibrated enough to rank plausible citation locations highly, but not perfect. Qualitative inspection of the per-reference reports shows that many of the ``false positives'' are paragraphs that discuss the same topic or experiment as the gold paragraph and would not be unreasonable places to cite the reference, which partly explains why precision at the sentence level is not higher despite the model's useful ranking behavior.
 
 \section{Evaluation}
 
@@ -326,11 +326,12 @@ All quantitative evaluation is performed under a strict train/validation/test sp
 \begin{itemize}
     \item tuning the sentence-level threshold $t^\star$,
     \item comparing hyperparameter configurations (learning rate and number of epochs),
+\end{itemize}
 
 The test split is held out until final model selection and is evaluated only once for the reported metrics.
 
 \paragraph{Baselines and sanity checks.}
-We use a TF–IDF + logistic regression model as a strong lexical baseline on the same sentence–reference pairs. Its performance (accuracy $\approx 0.50$–$0.52$, F1 $\approx 0.33$–$0.36$) is substantially worse than the tuned SciBERT cross-encoder, which reaches F1 $\approx 0.53$ on the test set. This confirms that the transformer is capturing useful contextual and cross-sentence information beyond surface lexical overlap.
+We use a TF-IDF + logistic regression model as a strong lexical baseline on the same sentence-reference pairs. Its performance (accuracy $\approx 0.50$-$0.52$, F1 $\approx 0.33$-$0.36$) is substantially worse than the tuned SciBERT cross-encoder, which reaches F1 $\approx 0.53$ on the test set. This confirms that the transformer is capturing useful contextual and cross-sentence information beyond surface lexical overlap.
 
 
 
@@ -365,7 +366,7 @@ In addition, while all papers that have paragraph entries in the CiteWorth datas
 \subsection{Low Precision}
 A major modeling limitation is that our final SciBERT classifier operates at a relatively low precision. At the tuned sentence-level threshold ($t \approx 0.3$), we achieve good recall on the test set (around $0.63$) and a reasonable F1 score (around $0.53$), but precision is only about $0.44$. In practice, this means that a non-trivial fraction of suggested citations are false positives, which would still require manual filtering by an author.
 
-There are several reasons for this behavior. First, we deliberately chose a low threshold to favor recall over precision: missing citations is worse than suggesting extra ones, but this inherently produces more false positives. Second, many ``false positives'' are semantically related references that would not be unreasonable to cite, so from the model’s perspective they are hard negatives. Overall, our current system is tuned for high recall and decent F1, at the cost of precision. A more production-oriented system would likely adopt a stricter threshold to reduce false positives while preserving as much recall as possible.
+There are several reasons for this behavior. First, we deliberately chose a low threshold to favor recall over precision: missing citations is worse than suggesting extra ones, but this inherently produces more false positives. Second, many ``false positives'' are semantically related references that would not be unreasonable to cite, so from the model's perspective they are hard negatives. Overall, our current system is tuned for high recall and decent F1, at the cost of precision. A more production-oriented system would likely adopt a stricter threshold to reduce false positives while preserving as much recall as possible.
 
 
 
@@ -385,6 +386,10 @@ We unfortunately did not have time or storage capacity to re-download the S2ORC 
 
 
 \section{Conclusion and Future Work}
+
+In conclusion, our Auto Citation tool demonstrates the potential effectiveness of Transformer architectures in creating citation tools for academia. While we faced many challenges and constraints during the project, we were able to build a functioning prototype that can place citations in a document based on a provided bibliography and reference list. 
+
+Future work on this project coudl involve improving the descision mehchansim for placing citations, such as considering more contextual information from the document and references, or incorporating user feedback to refine the citation placements. Additionally, as for most machine learning tasks, gathering a curating more high quality data would likely improve model performance. Finally, integrating the tool into an easy to use user interface, such as a VSCode extension or web app, would make it more accessible, testable, and usable. 
 
 \printbibliography
 
