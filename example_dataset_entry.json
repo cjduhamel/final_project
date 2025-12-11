@@ -1,0 +1,9 @@
+{
+    "original_paper_id": 251187, 
+    "sentence": "A powerful tool to study strongly interacting gauge theories, both at finite and at zero temperature, is the string/gauge theory correspondence.", 
+    "ref_paper_id": "BIBREF5", 
+    "ref_paper_title": "The Large-N Limit of Superconformal Field Theories and Supergravity", 
+    "ref_paper_authors": "J. Maldacena", 
+    "ref_paper_text": "\nGeneral idea\n\nIn the last few years it has been extremely fruitful to derive quantum field theories by taking various limits of string or M-theory. In some cases this is done by considering the theory at geometric singularities and in others by considering a configuration containing branes and then taking a limit where the dynamics on the brane decouples from the bulk. \n\nIn this paper we consider theories that are obtained by decoupling theories on branes from gravity. We focus on conformal inv", 
+    "label": 1
+}
