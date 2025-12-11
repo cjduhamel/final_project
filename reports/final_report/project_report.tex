@@ -71,7 +71,7 @@ The dataset is organized in JSONL format, with each line representing a single p
     \item \textbf{paper\_id}: The unique identifier for the paper.
     \item \textbf{metadata}: Metadata about the paper, including title, authors, abstract, and publication venue.
     \item \textbf{body (or content)}: All relevant information from the paper, including the full text, figure and table info/captions, and any included annotations (byte offsets, in-text citation locations, etc.). This section contains a lot of information and is losely structured. It soemtimes contains nested fields, other times the fields are called different names, and sometimes the information is missing altogether. However, the full text of the paper is ussually in a consistent format.
-    \item \textbf{bibliography}: A list of references cited in the paper, each with its own set of metadata, including the 'matched\_paper\_id', which is the id for the referenced paper in the Semantic Scholar Academic Graph (S2AG), a superset of the S2ORC that contains significantly more papers, but not all of them contain text. This also contains a section called 'annotations', which contains the matched paper ids and byte offsets for bibliography entries.
+    \item \textbf{bibliography}: A list of references cited in the paper, each with its own set of metadata, including the 'matched\_paper\_id', which is the id for the referenced paper in the Semantic Scholar Academic Graph (S2AG) \cite{S2AG}, a superset of the S2ORC that contains significantly more papers, but not all of them contain text. This also contains a section called 'annotations', which contains the matched paper ids and byte offsets for bibliography entries.
     
 \end{itemize}
 
@@ -79,7 +79,27 @@ The dataset is organized in JSONL format, with each line representing a single p
 Our system is comprised of several key components that make up the pipeline for auto placing in text citations. We begin with the data sources mentioned above, which will be the basis for our project. The dataset retrieval is a major step in the process. Once the data is retrieved, we create our own local database to facilitate faster lookups during dataset building. Next, we build our training dataset from the combined CiteWorth and S2ORC datasets. This dataset will then be used to train and evaluate our model. Finally, we will utilize the model for inference on new complete documents to place citations automatically.
 
 \section{Dataset Creation and Design}
-Building a high-quality dataset is crucial to model performance. Ideally, we want to take advantage of the large 
+Building a high-quality dataset is crucial to model performance. Ideally, we want to take advantage of the large datasets available, since we have to handle them in their entirety anyway. However, we need to ensure that the data we have is both relevant and mostly contained within the S2ORC dataset, since not all referenced papers have full text available (i.e. they are only in the S2AG dataset).
+
+\subsection{Data Retrieval}
+
+Initially, we had assumed that the S2ORC dataset could be accessed via API calls to retrieve individual papers and their data. We were, however, mistaken. Thus, we are required to download the full S2ORC dataset in bulk and extract the relevant papers using their 'Corpus Id's. This is significantly more complex than we had originally anticipated, and much time has been spent just designing the downloader. 
+
+The general algorithm we wrote for downloading the dataset is as follows:
+\begin{enumerate}
+    \item Call the Semantic Scholar (S2) API to retrieve the most recent release of the S2ORC dataset.
+    \item Call the S2 API again to retrieve the presigned download links for the dataset files.
+    \item Build a CSV by extracting the "shard\_id" for each download link and associating it with the corresponding presigned URL. Add additonal columns to the CSV to track download status and local file paths. This is to facilitate resuming downloads in case of interruptions.
+    \item Download the dataset files using the presigned links. For each link (i.e. row in the CSV), do the following:
+        \begin{enumerate}
+            \item Check the download status column in the CSV to see if the file has already been downloaded. If it has, skip to the next row.
+            \item If the file has not been downloaded, download it and save it to the specified local file path.
+            \item After a successful download, update the download status column in the CSV to indicate that the file has been downloaded.
+            \item The presigned URLs have a limited validity period, which is much less than the time required to download the whole dataset. If a link has expired, refresh the links by repeating step 2 and updating the CSV with the new links. Then, retry downloading the expired file.
+        \end{enumerate}
+\end{enumerate}
+
+Retrieving the CiteWorth
 
 \section{The Model}
 

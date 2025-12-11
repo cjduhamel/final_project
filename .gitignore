@@ -17,6 +17,7 @@ build/
 *.bcf
 .DS_Store
 saved_model_t_0_25/
+saved_model*/
 example_paper_reports/
 saved_model_t_0_45
 *.zip
