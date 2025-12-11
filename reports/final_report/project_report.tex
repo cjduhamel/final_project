@@ -99,15 +99,96 @@ The general algorithm we wrote for downloading the dataset is as follows:
         \end{enumerate}
 \end{enumerate}
 
-Retrieving the CiteWorth
+Retrieving the CiteWorth dataset was significantly simpler, as it is available directly via Hugging Face \cite{HuggingFace}. We simply downloaded the dataset via their API and pandas \cite{pandas} for easy exploration and manipulation.
+
+\subsection{Dataset Building}
+We begin with a mapping between paper corpus\_ids to the file paths in the S2ORC dataset that we created for the last checkpoint. This mapping is stored in a CSV file where each row contains a corpus\_id and the corresponding file path (shard) to the S2ORC JSON file. We then read in the CiteWorth dataset and group by the corpus\_id to create a list of all the sections in the dataset for each paper. We do the following for each paper in the CiteWorth dataset:
+\begin{enumerate}
+    \item If the corpus\_id does not exist in the S2ORC mapping, we skip the paper.
+    \item Fetch the S2ORC JSON object using the file path from the mapping.
+    \item For each section in the CiteWorth dataset for the paper:
+    \begin{enumerate}
+        \item Identify the bibliography reference IDs that are present in that section
+        \item For each reference ID, locate the corresponding corpus\_id in the S2ORC JSON object's bibliography.
+        \item Get each referenced paper's JSON object using the corpus\_id to shard mapping.
+    \end{enumerate}
+    \item Reiterate through each sample (sentence) in each section:
+    \begin{enumerate}
+        \item If there are no references in the sample, skip it.
+        \item For each reference, create a new entry in the structured dataset that contains:
+        \begin{itemize}
+            \item The original paper's corpus\_id
+            \item The sentence text from the original paper
+            \item The reference paper's corpus\_id
+            \item The reference paper's title
+            \item The reference paper's authors
+            \item The first 500 characters of the reference paper's text (either abstract or introduction)
+            \item A label indicating whether the reference paper should be cited in that sentence (1 for cite, 0 for no cite)
+        \end{itemize}
+    \end{enumerate}
+
+\item Write the new json object to a JSONL file, along with writing the original paper's corpus\_id to a .log file to allow for the script to be resumed if interrupted.
+\end{enumerate}
+
+The process creates a dataset of sentence - reference pairs, with a label indicating whether the reference should be cited in that sentence. This structured dataset can then be used for training and evaluating our auto citation model.
+
+\subsection{Example Entries}
+Here are some example entries from the structured dataset:
+\begin{minted}[frame=lines, bgcolor=gray!10, breaklines=true]{json}
+    {
+        "original_paper_id": 386802, 
+        "sentence": "Clinical antigen-specific studies however, have so far failed to show the desired efficacy despite their good safety profile.", 
+        "ref_paper_id": 713469, 
+        "ref_paper_title": "Non-antigenic and antigenic interventions in type 1 diabetes", 
+        "ref_paper_authors": "Anna Ryd\u00e9n, J. Wesley, K. Coppieters, M. V. von Herrath", 
+        "ref_paper_text": "\nIntroduction\n\nDiabetes mellitus describes the outcome of several metabolic disorders characterized by hyperglycemia, including type 1 diabetes (T1D). In the context of T1D, hyperglycemia typically results from an immunologically driven assault on the \u03b2-cells-the insulin-producing cells of the pancreas-leading to insufficient insulin secretion. 4 \u03b2-Cell destruction is often rapid in young subjects but more prolonged in adults; this rate, however, is subject to great variability between individua", 
+        "label": 0
+    }
+    {
+        "original_paper_id": 386802, 
+        "sentence": "Clinical antigen-specific studies however, have so far failed to show the desired efficacy despite their good safety profile.", 
+        "ref_paper_id": 18952695, 
+        "ref_paper_title": "Immunotherapy for the Prevention and Treatment of Type 1 Diabetes", 
+        "ref_paper_authors": "M. Rewers, P. Gottlieb", 
+        "ref_paper_text": "\nI\n\nn the past 15 years, multiple clinical trials have attempted to find prevention for type 1 diabetes. The accompanying article by Bresson and von Herrath (1) reviews basic mechanisms underlying immunoprevention and immunotherapy of type 1 diabetes as well as selected human trials in the context of data from animal models. The second part of this minisymposium provides an overview of the recent or ongoing human trials. Immunotherapy for prevention of type 1 diabetes or to ameliorate the course", 
+        "label": 1
+    }
+\end{minted}
 
 \section{The Model}
+Used SciBERT \cite{sciBERT}
 
 \section{Results and Evaluation}
 
 \subsection{Evaluation Metrics}
 
 \section{Limitations and Problems}
+While we were working on our project, we encountered a variety of limitations that required workarounds, patience, or simply accepting defeat. The major limitations we faced were:
+
+\subsection{S2ORC Dataset Size}
+The S2ORC dataset is extremely large, at over 500 GB in size. As outlined in the Dataset Retrieval section, downloading the dataset itself was a significant portion of our time spent on the project. Additionally, there was no cloud storage solution available for free to store 500 GB of data, so we had to store it locally on CJ's personal computer. This severely limited our ability to collaborate effectively, as only one of us could access the full S2ORC dataset. We were, however, able to work around this by splitting up the work in a different way.
+
+The size was not just a factor in storage and download time, but also in processing time. Searching through the dataset, even after building our local mapping, was still quite slow, despite our best efforts to parallelize the work. Not only did this slow down our dataset building process, requiring about 2 weeks to build the full dataset, but it also restricted CJ's ability to utilize his personal computer for other tasks while the dataset building was running. This resulted in trading off between data aquisition and the usage of his PC, which is used as a remote machine for all of his projects. On average, it took about 5-7 minutes to identify a usable entry from the CiteWorth dataset and extract all relevant information from the S2ORC dataset, Thus resulting in over 100 hours of continuous processing time to build the full dataset.
+
+\subsection{Parsing Issues with S2ORC}
+The S2ORC dataset is not perfectly structured, and there are many inconsistencies in the way the data is parsed and stored. For example, some papers have their main text stored within a field called "body" that contains a variety of inconsistent nested subfields. Other papers have their main text stored in a field called "content", which is structured differently. Additionally, while many papers contain annotations for the locations of in-text citations, bibliography entries, and other useful information, many papers are missing this information or have limited annotations, so this method was not a reliable way of extracting the necessary data.
+
+In addition, while all papers that have paragraph entries in the CiteWorth dataset have corresponding entries in the S2ORC dataset, not all referenced papers in the CiteWorth dataset have full text available in the S2ORC dataset, thus was not in the S2ORC dataset at all. This made it difficult to build a complete dataset, as we had to skip many entries that still required a portion of the processing time to determine that they were unusable. This may, however, have a silver lining, as it forced our dataset to contain a larger bredth of citation examples, rather than many examples from fewer papers. This may help our model generalize better to unseen papers during inference, as it was trained on a wider variety of examples.
+
+\subsection{Corruption...}
+During the building of the test dataset, CJ's computer crashed. Upon restart we received the error shown in figure \ref{fig:crash}. This error seems to indicate that the filesystem was corrupted. This drive is now approximately 8 years old, so it may be that it has reached the end of its lifespan. Unfortunately, this meant that all the data on the drive was lost, including the entirety of the S2ORC dataset, the built index, the partially built test dataset, and all of the additional logic that was written to build the test dataset (not to mention over a TB of personal data). Despite numerous attempts at repairing the drive, including restarts, opening in other OSs, and running drive repair utilities, we were unable to regain access to the data on the drive. Fortunately, all code prior to building the test set was in GitHub, so not all was lost. 
+
+We unfortunately did not have time or storage capacity to re-download the S2ORC dataset and re-build the test set, so we worked around this by hand parsing a single paper that was not contained in any of our current datasets (it is actually a paper that is closely related to CJ's thesis research). While this is not ideal and is very time consuming, it allows us to at least demonstrate the inference capabilities of our model.
+
+
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/crashed.png}
+    \caption{Error message after CJ's computer crashed during test set building.}
+    \label{fig:crash}
+\end{figure}
+
 
 \section{Conclusion and Future Work}
 
