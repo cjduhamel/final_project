@@ -17,8 +17,7 @@ build/
 *.bcf
 .DS_Store
 saved_model_t_0_25/
-saved_model.zip
 example_paper_reports/
 saved_model_t_0_45
-new_saved_model.zip
+*.zip
 example_paper.predictions.json

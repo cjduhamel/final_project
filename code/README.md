@@ -13,97 +13,108 @@ and produces:
 2. A set of **per-reference text reports** with detailed scores and sentence-level probabilities.
 3. A summary **top-k paragraph accuracy** printed to the terminal (if labels are availble)
 
----
 
-## 1. High-level overview
 
-### Task
+## Usage
 
-Given:
+Run the tool like this:
 
-- a **sentence** from the paper, and  
-- a **ref_block** describing a candidate reference (title + authors + reference text),
+python cite.py example_paper.json 
+--model-dir saved_model 
+--agg mean 
+--top-k 3 
+--out-json example_paper.predicted.json 
+--out-dir example_paper_reports
 
-the model predicts whether the sentence **truly cites** that reference.
 
-The model is a fine-tuned `AutoModelForSequenceClassification` (SciBERT) with:
+Those are optioanl flags ^. You can also just run:
 
-- Label `0`: `NOT_CITATION`  
-- Label `1`: `CITATION`
+python cite.py example_paper.json
 
-### Inference pipeline (per reference)
-
-For each reference in the paper:
-
-1. **Build ref_block**
-
-   Concatenate the reference’s:
-   - title  
-   - authors  
-   - abstract / reference text  
-
-   into a single string `ref_block`.
-
-2. **Sentence-level scoring**
-
-   For each paragraph in the paper:
-
-   - Split the paragraph into sentences.
-   - For each sentence `s`:
-     - Run the cross-encoder on the pair `(sentence = s, ref_block)`.
-     - Obtain `P(CITATION | s, ref_block)` via softmax on the model logits.
-
-3. **Paragraph-level aggregation**
-
-   Given the list of sentence probabilities for a paragraph, e.g.  
-   \[
-   p_1, p_2, \ldots, p_n
-   \]
-
-   the tool aggregates them into a single **paragraph score** using one of:
-
-   - `mean` (default): average of sentence probabilities  
-   - `max`: maximum sentence probability  
-   - `noisy_or`: \(1 - \prod_i (1 - p_i)\)
-
-4. **Ranking & top-k prediction**
-
-   - Rank all paragraphs in the paper by their aggregated score for that reference.
-   - Select the **top-k** paragraphs as predicted citation locations for that reference:
-     - `k = 1` by default (single best paragraph),
-     - configurable via `--top-k`.
-
-5. **Evaluation (if gold labels exist)**
-
-   If the input JSON includes `referenced_in_paragraphs` (gold paragraph indices for each reference), the script computes:
-
-   - **Top-k paragraph accuracy**: a reference is counted correct if *any* of its top-k predicted paragraphs matches one of the gold indices.
-
-   This accuracy is printed to stdout at the end of the run.
+Defaults: model-dir = saved_model, agg = mean, top-k = 1.
 
 ---
 
-## 2. Input format
+## Requirements
 
-`cite.py` expects a JSON file describing a single paper with the following structure (minimal example):
+Python 3, numpy, torch, transformers.
 
-```json
+The model directory must look like a HuggingFace checkpoint and contain an inference_config.json specifying max_length and label mappings.
+
+---
+
+## Input Format
+
+The input JSON must contain:
+
+* "paragraphs": list of paragraph strings.
+* "references": list of reference dicts. Each reference may use either:
+
+  * title / authors / text, or
+  * ref_paper_title / ref_paper_authors / ref_paper_text.
+* Optional: "referenced_in_paragraphs": list of gold (turth) paragraph indices for computing accuracy.
+
+Example:
+
 {
-  "paper_id": "paper_001",
-  "title": "Paper title...",
-  "authors": "Author A; Author B",
-  "paragraphs": [
-    "Full text of paragraph 0...",
-    "Full text of paragraph 1...",
-    "Full text of paragraph 2..."
-  ],
-  "references": [
-    {
-      "id": "ref_0",
-      "title": "Reference title...",
-      "authors": "Ref Author 1; Ref Author 2",
-      "text": "Abstract or reference text...",
-      "referenced_in_paragraphs": [2, 3]
-    }
-  ]
+"paragraphs": ["para 0...", "para 1...", "para 2..."],
+"references": [
+{
+"title": "Paper Title",
+"authors": "Alice et al.",
+"text": "Abstract...",
+"referenced_in_paragraphs": [1]
 }
+]
+}
+
+---
+
+## What the Script Does
+
+1. Loads the model and tokenizer from --model-dir.
+2. Loads the paper JSON and splits paragraphs into sentences.
+3. For each reference:
+
+   * Builds a reference block from title/authors/text.
+   * For every paragraph:
+     * Scores each sentence for P(citation | sentence, ref).
+     * Aggregates sentence-level scores into a paragraph score using mean or max
+   * Ranks paragraphs and keeps top-K.
+   * Writes a detailed text report for this reference.
+
+4. Computes top-K accuracy if gold labels are present.
+5. Writes a new JSON file containing predicted paragraph indices and scores.
+
+---
+
+## Output
+The script produces:
+
+1. An augmented JSON (path specified by --out-json or default input.predicted.json) with:
+
+"predicted_citations": {
+"agg_method": "mean",
+"top_k": 3,
+"paragraphs": [
+{"paragraph_idx": 5, "score": 0.92},
+{"paragraph_idx": 2, "score": 0.80},
+{"paragraph_idx": 1, "score": 0.55}
+]
+}
+2. A directory of human-readable reports (default input_reports/), one file per reference:
+   ref_000.txt, ref_001.txt, …
+
+3. Printed accuracy:
+   Top-K accuracy = correct/total.
+
+---
+
+## Notes
+
+* The threshold in inference_config.json is loaded but not used for paragraph ranking.
+* Sentence splitting is a simple regex-based splitter.
+* Accuracy is only computed for references with labels.
+* Label index 1 must correspond to the CITATION class.
+
+
