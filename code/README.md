@@ -40,6 +40,9 @@ Defaults: model-dir = saved_model, agg = mean, top-k = 1.
 
 Python 3, numpy, torch, transformers.
 
+pip install -r env.txt
+
+
 The model directory must look like a HuggingFace checkpoint and contain an inference_config.json specifying max_length and label mappings.
 
 We give you the zip of the model professor you can just put that in the same dir as cite.py and just run it as mentioned above 
